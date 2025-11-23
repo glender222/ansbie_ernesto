@@ -11,10 +11,10 @@ localhost ansible_connection=local
 # LINUX SERVERS (Linux Mint)
 # ============================================
 [linux_servers]
-glender-vm ansible_host=192.168.11.137 ansible_user=glender
+maquina-vm ansible_host=192.168.11.137 ansible_user=glender
 
 [mint_servers]
-glender-vm
+maquina-vm
 
 [ubuntu_servers]
 # Si tienes Ubuntu también (Linux Mint es compatible)
