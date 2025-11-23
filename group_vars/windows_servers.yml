@@ -1,13 +1,15 @@
 ---
 # Variables para servidores Windows
+
+# Conexión WinRM
 ansible_connection: winrm
 ansible_port: 5986
 ansible_winrm_transport: ntlm
 ansible_winrm_server_cert_validation: ignore
 
-# Credenciales (se sobrescribirán con vault)
+# Credenciales Windows (sin vault - contraseña directa)
 ansible_user: Administrator
-ansible_password: "{{ vault_windows_admin_password }}"
+ansible_password: "Abc123#*"
 
 # PowerShell configuration
 ansible_shell_type: powershell
