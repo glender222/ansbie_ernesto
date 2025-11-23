@@ -1,0 +1,101 @@
+---
+# Playbook exclusivo para Linux - No requiere módulos de Windows
+# Uso: ansible-playbook linux_only.yml -e "module=5" --ask-pass --ask-become-pass
+
+- name: "Banner Inicial"
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    - name: Mostrar banner
+      ansible.builtin.debug:
+        msg:
+          - "╔════════════════════════════════════════════════════════════╗"
+          - "║   ANSIBLE - GESTIÓN DE LINUX ÚNICAMENTE                 ║"
+          - "╚════════════════════════════════════════════════════════════╝"
+          - ""
+          - "Sistemas objetivo: {{ groups['all_linux'] | default([]) | join(', ') }}"
+
+- name: "Módulo 1: Gestión de Usuarios (Linux)"
+  hosts: all_linux
+  become: yes
+  gather_facts: yes
+  roles:
+    - role: users_linux
+      when: module is defined and module == "1" or module is not defined
+  tags:
+    - users
+    - module1
+
+- name: "Módulo 2: Seguridad y Firewall (Linux)"
+  hosts: all_linux
+  become: yes
+  gather_facts: yes
+  roles:
+    - role: firewall_linux
+      when: module is defined and module == "2" or module is not defined
+  tags:
+    - security
+    - firewall
+    - module2
+
+- name: "Módulo 3: Tareas Programadas (Linux)"
+  hosts: all_linux
+  become: yes
+  gather_facts: yes
+  roles:
+    - role: scheduled_tasks_linux
+      when: module is defined and module == "3" or module is not defined
+  tags:
+    - cron
+    - scheduled_tasks
+    - module3
+
+- name: "Módulo 4: Software Provisioning (Linux)"
+  hosts: all_linux
+  become: yes
+  gather_facts: yes
+  roles:
+    - role: software_linux
+      when: module is defined and module == "4" or module is not defined
+  tags:
+    - software
+    - packages
+    - module4
+
+- name: "Módulo 5: Monitoreo (Linux)"
+  hosts: all_linux
+  become: yes
+  gather_facts: yes
+  roles:
+    - role: monitoring_linux
+      when: module is defined and module == "5" or module is not defined
+  tags:
+    - monitoring
+    - module5
+
+- name: "Módulo 6: Storage Management (Linux)"
+  hosts: all_linux
+  become: yes
+  gather_facts: yes
+  roles:
+    - role: storage_linux
+      when: module is defined and module == "6" or module is not defined
+  tags:
+    - storage
+    - module6
+
+- name: "Resumen Final"
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    - name: Mostrar resumen
+      ansible.builtin.debug:
+        msg:
+          - "╔════════════════════════════════════════════════════════════╗"
+          - "║   EJECUCIÓN COMPLETADA                                   ║"
+          - "╚════════════════════════════════════════════════════════════╝"
+          - ""
+          - "Módulo ejecutado: {{ module | default('TODOS') }}"
+          - "Sistemas Linux procesados: {{ groups['all_linux'] | default([]) | length }}"
