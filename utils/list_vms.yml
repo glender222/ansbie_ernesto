@@ -1,0 +1,110 @@
+---
+# Playbook para listar todas las VMs del inventario
+# Uso: ansible-playbook utils/list_vms.yml
+
+- name: "📋 Listar Todas las VMs"
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  
+  tasks:
+    - name: Mostrar banner
+      ansible.builtin.debug:
+        msg:
+          - "╔════════════════════════════════════════════════════════════╗"
+          - "║   INVENTARIO DE VMS - ANSIBLE                            ║"
+          - "╚════════════════════════════════════════════════════════════╝"
+      tags: always
+
+    - name: Obtener información del inventario
+      ansible.builtin.set_fact:
+        inventory_data: "{{ groups }}"
+      tags: always
+
+    - name: Mostrar todos los grupos
+      ansible.builtin.debug:
+        msg: "Grupos disponibles: {{ groups.keys() | list }}"
+      tags: always
+
+- name: "🐧 VMs Linux"
+  hosts: all_linux
+  gather_facts: no
+  
+  tasks:
+    - name: Información básica de hosts Linux
+      ansible.builtin.debug:
+        msg:
+          - "Host: {{ inventory_hostname }}"
+          - "IP: {{ ansible_host | default('No configurada') }}"
+          - "Usuario: {{ ansible_user | default('No configurado') }}"
+      tags:
+        - linux
+        - all
+
+- name: "🪟 VMs Windows"
+  hosts: all_windows
+  gather_facts: no
+  
+  tasks:
+    - name: Información básica de hosts Windows
+      ansible.builtin.debug:
+        msg:
+          - "Host: {{ inventory_hostname }}"
+          - "IP: {{ ansible_host | default('No configurada') }}"
+          - "Puerto WinRM: {{ ansible_port | default(5986) }}"
+      tags:
+        - windows
+        - all
+
+- name: "📊 Resumen de Inventario"
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  
+  tasks:
+    - name: Contar VMs por categoría
+      ansible.builtin.debug:
+        msg:
+          - "════════════════════════════════════════════════════════════"
+          - "RESUMEN DE INVENTARIO"
+          - "════════════════════════════════════════════════════════════"
+          - "VMs Linux: {{ groups['all_linux'] | default([]) | length }}"
+          - "  - Linux Mint: {{ groups['mint_servers'] | default([]) | length }}"
+          - "  - Ubuntu: {{ groups['ubuntu_servers'] | default([]) | length }}"
+          - "  - CentOS: {{ groups['centos_servers'] | default([]) | length }}"
+          - ""
+          - "VMs Windows: {{ groups['all_windows'] | default([]) | length }}"
+          - ""
+          - "TOTAL: {{ groups['all'] | default([]) | difference(['localhost']) | length }}"
+          - "════════════════════════════════════════════════════════════"
+      tags: always
+
+- name: "🔍 Test de Conectividad"
+  hosts: all:!localhost
+  gather_facts: no
+  
+  tasks:
+    - name: Ping a hosts Linux
+      ansible.builtin.ping:
+      when: inventory_hostname in groups['all_linux']
+      register: ping_result_linux
+      ignore_errors: yes
+      tags:
+        - connectivity
+        - linux
+
+    - name: Ping a hosts Windows
+      ansible.windows.win_ping:
+      when: inventory_hostname in groups['all_windows']
+      register: ping_result_windows
+      ignore_errors: yes
+      tags:
+        - connectivity
+        - windows
+
+    - name: Mostrar resultado de conectividad
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }}: {{ '✅ Conectado' if (ping_result_linux is success or ping_result_windows is success) else '❌ No conectado' }}"
+      when: ping_result_linux is defined or ping_result_windows is defined
+      tags:
+        - connectivity
