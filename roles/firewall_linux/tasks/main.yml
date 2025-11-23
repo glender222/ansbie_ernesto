@@ -4,14 +4,14 @@
 - name: Detectar sistema de firewall disponible
   ansible.builtin.set_fact:
     detected_firewall: "{{ 'firewalld' if ansible_facts.services['firewalld.service'] is defined else ('ufw' if ansible_facts.services['ufw.service'] is defined else 'iptables') }}"
-  when: firewall_type == 'auto'
+  when: linux_firewall_type == 'auto'
   tags:
     - firewall
     - security
 
 - name: Usar firewall especificado o detectado
   ansible.builtin.set_fact:
-    active_firewall: "{{ firewall_type if firewall_type != 'auto' else detected_firewall }}"
+    active_firewall: "{{ linux_firewall_type if linux_firewall_type != 'auto' else detected_firewall }}"
   tags:
     - firewall
 
