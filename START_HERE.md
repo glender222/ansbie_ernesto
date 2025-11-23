@@ -20,22 +20,15 @@ cd /mnt/c/ernesto_ansible/ansible_oficial
 
 ---
 
-## Paso 3: Ejecutar configuración automática
+## Paso 3: Probar conectividad
 
 ```bash
-chmod +x quick_setup.sh
-./quick_setup.sh
+ansible all -m ping --ask-pass --ask-become-pass
 ```
 
-Espera a que termine (10-20 segundos).
-
----
-
-## Paso 4: Probar conectividad
-
-```bash
-ansible all -m ping
-```
+**Ansible te pedirá:**
+1. SSH password (Linux: `123456`, Windows usa WinRM automáticamente)
+2. BECOME password (sudo): `123456`
 
 **Deberías ver:**
 ```
@@ -45,22 +38,29 @@ ansib-win10 | SUCCESS => {"ping": "pong"}
 
 ---
 
-## Paso 5: Ejecutar módulos
+## Paso 4: Ejecutar módulos
+
+**Todos los comandos te pedirán las contraseñas cuando ejecutes.**
 
 ### Módulo 5 (Monitoreo - solo lee):
 ```bash
-ansible-playbook main_router.yml -e "module=5"
+ansible-playbook main_router.yml -e "module=5" --ask-pass --ask-become-pass
 ```
 
 ### Módulo 1 (Usuarios - hace cambios):
 ```bash
-ansible-playbook main_router.yml -e "module=1"
+ansible-playbook main_router.yml -e "module=1" --ask-pass --ask-become-pass
 ```
 
 ### Todos los módulos:
 ```bash
-ansible-playbook main_router.yml
+ansible-playbook main_router.yml --ask-pass --ask-become-pass
 ```
+
+**Contraseñas que te pedirá:**
+- SSH password: `123456` (para Linux)
+- BECOME password (sudo): `123456` (para Linux)
+- Windows usa WinRM con las credenciales del inventario
 
 ---
 
@@ -79,17 +79,16 @@ ansible-inventory --list
 
 ### Listar VMs:
 ```bash
-ansible-playbook utils/list_vms.yml
+ansible-playbook utils/list_vms.yml --ask-pass --ask-become-pass
 ```
 
-### Ver credenciales del vault:
+### Ejecutar comando ad-hoc:
 ```bash
-ansible-vault view group_vars/all/vault.yml
-```
+# Ver uptime
+ansible all -a "uptime" --ask-pass --ask-become-pass
 
-### Editar credenciales:
-```bash
-ansible-vault edit group_vars/all/vault.yml
+# Ver usuarios
+ansible all -a "whoami" --ask-pass
 ```
 
 ---
@@ -113,9 +112,12 @@ sudo systemctl enable ssh
 ```bash
 # Reinstalar pywinrm
 pip3 install --upgrade pywinrm
+```
 
-# En la VM Windows (PowerShell como Admin):
+En la VM Windows (PowerShell como Admin):
+```powershell
 winrm quickconfig -q
+winrm set winrm/config/service/auth '@{Basic="true"}'
 ```
 
 ### Si no encuentra ansible:
@@ -142,21 +144,18 @@ pip3 install pywinrm
 
 ## 🎯 Comandos Todo-en-Uno
 
-Si quieres hacer todo de una sola vez:
+**Probar y ejecutar todo:**
 
 ```bash
 wsl
 cd /mnt/c/ernesto_ansible/ansible_oficial
-chmod +x quick_setup.sh && ./quick_setup.sh && ansible all -m ping
+ansible all -m ping --ask-pass --ask-become-pass
+ansible-playbook main_router.yml -e "module=5" --ask-pass --ask-become-pass
 ```
 
-**O para ejecutar directamente un módulo después de configurar:**
-
-```bash
-wsl
-cd /mnt/c/ernesto_ansible/ansible_oficial
-chmod +x quick_setup.sh && ./quick_setup.sh && ansible-playbook main_router.yml -e "module=5"
-```
+**Contraseñas:**
+- SSH password: `123456`
+- BECOME password (sudo): `123456`
 
 ---
 
