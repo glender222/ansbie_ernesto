@@ -3,9 +3,9 @@
 
 # Política por defecto del firewall
 firewall_default_policy:
-  input: DROP
-  forward: DROP
-  output: ACCEPT
+  input: deny  # UFW acepta: allow, deny, reject
+  forward: deny
+  output: allow
 
 # Tipo de firewall a usar: firewalld, ufw, o iptables
 linux_firewall_type: ufw  # Usar UFW en Linux Mint
