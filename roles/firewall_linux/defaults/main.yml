@@ -8,7 +8,8 @@ firewall_default_policy:
   output: ACCEPT
 
 # Tipo de firewall a usar: firewalld, ufw, o iptables
-firewall_type: auto  # auto detectará automáticamente
+linux_firewall_type: ufw  # Usar UFW en Linux Mint
+enable_firewall: true  # Activar configuración del firewall
 
 # Reglas del firewall
 firewall_rules:
