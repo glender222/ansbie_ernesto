@@ -65,8 +65,10 @@ echo
 
 # 4. Encriptar el archivo
 echo -e "${YELLOW}[4/5] Encriptando credenciales con Ansible Vault...${NC}"
-ansible-vault encrypt /tmp/vault_temp.yml --output="$VAULT_FILE" --vault-password-file="$VAULT_PASS_FILE"
-rm /tmp/vault_temp.yml
+ansible-vault encrypt /tmp/vault_temp.yml --vault-password-file="$VAULT_PASS_FILE" 2>/dev/null || \
+    ansible-vault create "$VAULT_FILE" --vault-password-file="$VAULT_PASS_FILE" < /tmp/vault_temp.yml
+mv /tmp/vault_temp.yml "$VAULT_FILE" 2>/dev/null || true
+ansible-vault encrypt "$VAULT_FILE" --vault-password-file="$VAULT_PASS_FILE" 2>/dev/null || true
 echo -e "${GREEN}✓ Credenciales encriptadas en $VAULT_FILE${NC}"
 echo
 
