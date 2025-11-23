@@ -1,29 +1,5 @@
 # 🔧 Configuración Rápida para VMware
 
-Esta guía te muestra **exactamente qué archivos editar** para adaptar el proyecto a VMware.
-
-## 📝 Archivos que DEBES Editar
-
-### 1. Inventario (OBLIGATORIO)
-
-**Archivo:** `inventory/hosts`
-
-Descomentar y configurar con IPs de VMware:
-
-```ini
-[linux_servers]
-ansible-ubuntu-01 ansible_host=192.168.137.101 ansible_user=ansible
-
-[ubuntu_servers]
-ansible-ubuntu-01
-
-[windows_servers]
-# windows-vm1 ansible_host=192.168.137.201
-```
-
-**IPs para VMware:**
-- Red Host-Only: `192.168.137.0/24`
-- Primera VM Linux: `192.168.137.101`
 - Segunda VM Linux: `192.168.137.102`
 - Primera VM Windows: `192.168.137.201`
 - Segunda VM Windows: `192.168.137.202`

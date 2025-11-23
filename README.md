@@ -71,6 +71,32 @@ ansible_oficial/
 
 ## 🚀 Inicio Rápido
 
+### ⚡ Configuración Automática (NUEVO - Recomendado)
+
+Si ya tienes las VMs creadas, usa el script de configuración rápida:
+
+```bash
+# En WSL
+cd /mnt/c/ernesto_ansible/ansible_oficial
+chmod +x quick_setup.sh
+./quick_setup.sh
+```
+
+**Este script configura automáticamente:**
+- ✅ Ansible Vault con tus credenciales
+- ✅ Archivo de contraseña del vault
+- ✅ Verifica la configuración
+
+**Credenciales incluidas por defecto:**
+- Linux Mint: `123456`
+- Windows 10: `Abc123#*` / PIN: `456123`
+
+> 💡 **Tip**: Edita `quick_setup.sh` antes de ejecutarlo si quieres cambiar las credenciales por defecto.
+
+---
+
+### 📚 Configuración Manual (Si prefieres hacerlo paso a paso)
+
 ### 0. ¿Estás en Windows? Usa WSL (Recomendado)
 
 Si estás en una laptop Windows, **usa WSL** para ejecutar Ansible:

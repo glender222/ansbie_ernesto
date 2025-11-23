@@ -241,6 +241,25 @@ choco --version
 
 ### En WSL (tu laptop):
 
+#### Opción A: ⚡ Configuración Automática (RECOMENDADO)
+
+```bash
+# 1. Ir al proyecto
+cd /mnt/c/ernesto_ansible/ansible_oficial
+
+# 2. Ejecutar script de configuración rápida
+chmod +x quick_setup.sh
+./quick_setup.sh
+```
+
+**Este script configura automáticamente:**
+- ✅ Inventario (ya actualizado con tus IPs)
+- ✅ Ansible Vault con credenciales
+- ✅ Archivo de contraseña del vault
+- ✅ Verifica conectividad
+
+#### Opción B: Configuración Manual
+
 #### 1. Actualizar inventario
 
 **Archivo:** `inventory/hosts`
