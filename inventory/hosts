@@ -1,6 +1,7 @@
 # ============================================
 # ANSIBLE INVENTORY - VMware VMs
 # Linux Mint + Windows 10
+# Red: 192.168.11.0/24
 # ============================================
 
 [local]
@@ -10,28 +11,22 @@ localhost ansible_connection=local
 # LINUX SERVERS (Linux Mint)
 # ============================================
 [linux_servers]
-# VMs con Linux Mint en VMware
-# mint-vm1 ansible_host=192.168.137.101 ansible_user=tu-usuario
-# mint-vm2 ansible_host=192.168.137.102 ansible_user=tu-usuario
+glender-vm ansible_host=192.168.11.137 ansible_user=glender
 
 [mint_servers]
-# Todas las VMs Linux Mint
-# mint-vm1 ansible_host=192.168.137.101 ansible_user=tu-usuario
+glender-vm
 
 [ubuntu_servers]
 # Si tienes Ubuntu también (Linux Mint es compatible)
-# ubuntu-vm1 ansible_host=192.168.137.103
 
 [centos_servers]
 # Servidores CentOS/RHEL específicos (si los tienes)
 
 # ============================================
-# WINDOWS SERVERS (Windows 10)
+# WINDOWS SERVERS (Windows 10 Home)
 # ============================================
 [windows_servers]
-# VMs con Windows 10 en VMware
-# win10-vm1 ansible_host=192.168.137.201
-# win10-vm2 ansible_host=192.168.137.202
+ansib-win10 ansible_host=192.168.11.138
 
 # ============================================
 # GRUPOS DE FUNCIONALIDAD
