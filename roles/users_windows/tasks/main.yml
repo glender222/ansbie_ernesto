@@ -32,36 +32,38 @@
   tags:
     - users
 
-- name: Configurar política de contraseñas mínimas
-  ansible.windows.win_security_policy:
-    section: "System Access"
-    key: "{{ item.key }}"
-    value: "{{ item.value }}"
-  loop:
-    - key: MinimumPasswordLength
-      value: "{{ password_policy.minimum_password_length | default(12) }}"
-    - key: PasswordHistorySize
-      value: "{{ password_policy.password_history_count | default(5) }}"
-    - key: MaximumPasswordAge
-      value: "{{ password_policy.maximum_password_age | default(90) }}"
-    - key: MinimumPasswordAge
-      value: "{{ password_policy.minimum_password_age | default(1) }}"
-  when: configure_password_policy | default(false)
-  tags:
-    - users
-    - security
-    - password_policy
+# NOTA: win_security_policy no existe en ansible.windows
+# Estas tareas están comentadas temporalmente
+# - name: Configurar política de contraseñas mínimas
+#   ansible.windows.win_security_policy:
+#     section: "System Access"
+#     key: "{{ item.key }}"
+#     value: "{{ item.value }}"
+#   loop:
+#     - key: MinimumPasswordLength
+#       value: "{{ password_policy.minimum_password_length | default(12) }}"
+#     - key: PasswordHistorySize
+#       value: "{{ password_policy.password_history_count | default(5) }}"
+#     - key: MaximumPasswordAge
+#       value: "{{ password_policy.maximum_password_age | default(90) }}"
+#     - key: MinimumPasswordAge
+#       value: "{{ password_policy.minimum_password_age | default(1) }}"
+#   when: configure_password_policy | default(false)
+#   tags:
+#     - users
+#     - security
+#     - password_policy
 
-- name: Configurar complejidad de contraseñas
-  ansible.windows.win_security_policy:
-    section: "System Access"
-    key: PasswordComplexity
-    value: "{{ 1 if password_policy.password_complexity_enabled | default(true) else 0 }}"
-  when: configure_password_policy | default(false)
-  tags:
-    - users
-    - security
-    - password_policy
+# - name: Configurar complejidad de contraseñas
+#   ansible.windows.win_security_policy:
+#     section: "System Access"
+#     key: PasswordComplexity
+#     value: "{{ 1 if password_policy.password_complexity_enabled | default(true) else 0 }}"
+#   when: configure_password_policy | default(false)
+#   tags:
+#     - users
+#     - security
+#     - password_policy
 
 - name: Verificar usuarios en grupos de Remote Desktop
   ansible.windows.win_group_membership:
