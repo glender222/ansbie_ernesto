@@ -1,0 +1,54 @@
+---
+# Tasks para tareas programadas en Windows
+
+- name: Crear directorios para scripts
+  ansible.windows.win_file:
+    path: C:\Scripts
+    state: directory
+  tags:
+    - scheduled_tasks
+    - scripts
+
+- name: Crear scripts PowerShell personalizados
+  ansible.windows.win_copy:
+    content: "{{ item.content }}"
+    dest: "{{ item.dest }}"
+  loop: "{{ custom_powershell_scripts }}"
+  when: custom_powershell_scripts is defined and custom_powershell_scripts | length > 0
+  tags:
+    - scheduled_tasks
+    - scripts
+
+- name: Configurar tareas programadas
+  community.windows.win_scheduled_task:
+    name: "{{ item.name }}"
+    description: "{{ item.description | default(omit) }}"
+    actions: "{{ item.actions }}"
+    triggers: "{{ item.triggers }}"
+    enabled: "{{ item.enabled | default(true) }}"
+    run_level: "{{ item.run_level | default('limited') }}"
+    state: "{{ item.state | default('present') }}"
+    author: "{{ item.author | default('Ansible') }}"
+  loop: "{{ windows_scheduled_tasks }}"
+  when: windows_scheduled_tasks is defined
+  tags:
+    - scheduled_tasks
+
+- name: Obtener información de tareas programadas
+  ansible.windows.win_shell: |
+    Get-ScheduledTask | Where-Object {$_.State -ne 'Disabled'} | 
+    Select-Object TaskName, State, @{Name='NextRun';Expression={(Get-ScheduledTaskInfo $_.TaskName).NextRunTime}} |
+    Format-Table -AutoSize
+  register: scheduled_tasks_info
+  changed_when: false
+  tags:
+    - scheduled_tasks
+    - info
+
+- name: Mostrar tareas programadas activas
+  ansible.builtin.debug:
+    msg: "{{ scheduled_tasks_info.stdout_lines }}"
+  when: scheduled_tasks_info.stdout_lines is defined
+  tags:
+    - scheduled_tasks
+    - info

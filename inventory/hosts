@@ -1,0 +1,53 @@
+# ============================================
+# ANSIBLE INVENTORY - VirtualBox VMs
+# ============================================
+
+[local]
+localhost ansible_connection=local
+
+# ============================================
+# LINUX SERVERS
+# ============================================
+[linux_servers]
+# Ejemplo de VM Linux en VirtualBox
+# linux-vm1 ansible_host=192.168.56.101 ansible_user=ansible ansible_ssh_private_key_file=~/.ssh/id_rsa
+# linux-vm2 ansible_host=192.168.56.102 ansible_user=ansible
+
+[ubuntu_servers]
+# Servidores Ubuntu específicos
+# ubuntu-vm1 ansible_host=192.168.56.103
+
+[centos_servers]
+# Servidores CentOS/RHEL específicos
+# centos-vm1 ansible_host=192.168.56.104
+
+# ============================================
+# WINDOWS SERVERS
+# ============================================
+[windows_servers]
+# Ejemplo de VM Windows en VirtualBox
+# windows-vm1 ansible_host=192.168.56.201
+# windows-vm2 ansible_host=192.168.56.202
+
+# ============================================
+# GRUPOS DE FUNCIONALIDAD
+# ============================================
+[web_servers]
+# Servidores web (Linux o Windows)
+
+[db_servers]
+# Servidores de base de datos
+
+[app_servers]
+# Servidores de aplicaciones
+
+# ============================================
+# GRUPOS PADRES
+# ============================================
+[all_linux:children]
+linux_servers
+ubuntu_servers
+centos_servers
+
+[all_windows:children]
+windows_servers

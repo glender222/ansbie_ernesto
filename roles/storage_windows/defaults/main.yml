@@ -1,0 +1,19 @@
+---
+# Defaults para storage_windows
+
+# Directorios a crear/gestionar
+managed_directories:
+  - path: 'C:\Data'
+    state: directory
+  - path: 'C:\Backup'
+    state: directory
+  - path: 'C:\Logs'
+    state: directory
+
+# Discos adicionales a formatear/montar
+additional_disks: []
+#  - disk_number: 1
+#    partition_style: GPT
+#    drive_letter: E
+#    label: "Data Drive"
+#    file_system: NTFS

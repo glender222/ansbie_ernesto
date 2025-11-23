@@ -1,0 +1,67 @@
+---
+# Tasks para gestión de storage en Linux
+
+- name: Crear directorios gestionados
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0755') }}"
+  loop: "{{ managed_directories }}"
+  when: managed_directories is defined
+  tags:
+    - storage
+    - directories
+
+- name: Instalar herramientas LVM
+  ansible.builtin.package:
+    name: lvm2
+    state: present
+  when: manage_lvm | default(false)
+  tags:
+    - storage
+    - lvm
+
+- name: Obtener información de discos
+  ansible.builtin.command: lsblk -o NAME,SIZE,TYPE,MOUNTPOINT
+  register: disk_info
+  changed_when: false
+  tags:
+    - storage
+    - info
+
+- name: Mostrar información de discos
+  ansible.builtin.debug:
+    msg: "{{ disk_info.stdout_lines }}"
+  tags:
+    - storage
+    - info
+
+- name: Obtener uso de filesystems
+  ansible.builtin.command: df -h
+  register: filesystem_usage
+  changed_when: false
+  tags:
+    - storage
+    - info
+
+- name: Mostrar uso de filesystems
+  ansible.builtin.debug:
+    msg: "{{ filesystem_usage.stdout_lines }}"
+  tags:
+    - storage
+    - info
+
+- name: Configurar montajes adicionales
+  ansible.posix.mount:
+    src: "{{ item.src }}"
+    path: "{{ item.path }}"
+    fstype: "{{ item.fstype }}"
+    opts: "{{ item.opts | default('defaults') }}"
+    state: "{{ item.state | default('mounted') }}"
+  loop: "{{ additional_mounts }}"
+  when: additional_mounts is defined and additional_mounts | length > 0
+  tags:
+    - storage
+    - mounts

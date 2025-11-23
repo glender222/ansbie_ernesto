@@ -1,0 +1,56 @@
+---
+# Defaults para el rol firewall_windows
+
+# Habilitar/deshabilitar perfiles de firewall
+firewall_profiles:
+  domain: true
+  private: true
+  public: true
+
+# Reglas del firewall de Windows
+windows_firewall_rules:
+  - name: "Allow RDP"
+    localport: 3389
+    protocol: tcp
+    direction: in
+    action: allow
+    enabled: yes
+    
+  - name: "Allow WinRM HTTP"
+    localport: 5985
+    protocol: tcp
+    direction: in
+    action: allow
+    enabled: yes
+    
+  - name: "Allow WinRM HTTPS"
+    localport: 5986
+    protocol: tcp
+    direction: in
+    action: allow
+    enabled: yes
+    
+  - name: "Allow HTTP"
+    localport: 80
+    protocol: tcp
+    direction: in
+    action: allow
+    enabled: yes
+    
+  - name: "Allow HTTPS"
+    localport: 443
+    protocol: tcp
+    direction: in
+    action: allow
+    enabled: yes
+
+# Reglas personalizadas adicionales
+custom_firewall_rules: []
+#  - name: "Custom App"
+#    localport: 8080
+#    protocol: tcp
+#    direction: in
+#    action: allow
+
+# Bloquear ping (ICMP)
+block_ping: false

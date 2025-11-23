@@ -1,0 +1,32 @@
+---
+# Defaults para storage_linux
+
+# Directorios a crear/gestionar
+managed_directories:
+  - path: /data
+    owner: root
+    group: root
+    mode: '0755'
+  - path: /backup
+    owner: root
+    group: root
+    mode: '0700'
+
+# LVM - Logical Volume Management
+manage_lvm: false
+lvm_volume_groups: []
+#  - vg_name: vg_data
+#    pvs: /dev/sdb
+#    lvs:
+#      - name: lv_data
+#        size: 10G
+#        fstype: ext4
+#        mount_point: /data
+
+# Montajes adicionales
+additional_mounts: []
+#  - src: /dev/sdb1
+#    path: /mnt/extra
+#    fstype: ext4
+#    opts: defaults
+#    state: mounted

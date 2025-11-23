@@ -1,0 +1,105 @@
+---
+# Tasks para monitoreo en Windows
+
+- name: Verificar que servicios críticos están corriendo
+  ansible.windows.win_service:
+    name: "{{ item }}"
+    state: started
+    start_mode: auto
+  loop: "{{ monitored_services }}"
+  when: monitored_services is defined
+  tags:
+    - monitoring
+    - services
+
+- name: Obtener información de servicios
+  ansible.windows.win_shell: |
+    Get-Service | Where-Object {$_.Status -eq 'Running'} | 
+    Select-Object Name, DisplayName, Status | Format-Table -AutoSize
+  register: running_services
+  changed_when: false
+  tags:
+    - monitoring
+    - services
+    - info
+
+- name: Obtener uso de recursos del sistema
+  ansible.windows.win_shell: |
+    $cpu = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples.CookedValue
+    $memory = Get-CimInstance Win32_OperatingSystem | Select-Object @{
+      Name='MemoryUsagePercent';
+      Expression={[math]::Round(($_.TotalVisibleMemorySize - $_.FreePhysicalMemory) / $_.TotalVisibleMemorySize * 100, 2)}
+    }
+    $disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object @{
+      Name='DiskUsagePercent';
+      Expression={[math]::Round(($_.Size - $_.FreeSpace) / $_.Size * 100, 2)}
+    }
+    
+    @{
+      CPU = [math]::Round($cpu, 2)
+      Memory = $memory.MemoryUsagePercent
+      Disk = $disk.DiskUsagePercent
+    } | ConvertTo-Json
+  register: resource_usage
+  changed_when: false
+  tags:
+    - monitoring
+    - resources
+
+- name: Mostrar uso de recursos
+  ansible.builtin.debug:
+    msg: "{{ resource_usage.stdout | from_json }}"
+  tags:
+    - monitoring
+    - info
+
+- name: Advertir sobre uso alto de recursos
+  ansible.builtin.debug:
+    msg: "WARNING: {{ item.resource }} usage is {{ item.value }}%, exceeds threshold of {{ item.threshold }}%"
+  vars:
+    resources: "{{ resource_usage.stdout | from_json }}"
+  loop:
+    - { resource: 'CPU', value: "{{ resources.CPU }}", threshold: "{{ resource_thresholds.cpu_warning }}" }
+    - { resource: 'Memory', value: "{{ resources.Memory }}", threshold: "{{ resource_thresholds.memory_warning }}" }
+    - { resource: 'Disk', value: "{{ resources.Disk }}", threshold: "{{ resource_thresholds.disk_warning }}" }
+  when: item.value | float > item.threshold | float
+  tags:
+    - monitoring
+    - alerts
+
+- name: Obtener procesos con mayor uso de CPU
+  ansible.windows.win_shell: |
+    Get-Process | Sort-Object CPU -Descending | Select-Object -First 5 Name, CPU, WorkingSet |
+    Format-Table -AutoSize
+  register: top_cpu_processes
+  changed_when: false
+  tags:
+    - monitoring
+    - processes
+
+- name: Mostrar procesos con mayor uso de CPU
+  ansible.builtin.debug:
+    msg: "{{ top_cpu_processes.stdout_lines }}"
+  tags:
+    - monitoring
+    - info
+
+- name: Verificar el event log para errores recientes
+  ansible.windows.win_shell: |
+    Get-EventLog -LogName System -EntryType Error -Newest 5 |
+    Select-Object TimeGenerated, Source, Message |
+    Format-List
+  register: recent_errors
+  changed_when: false
+  failed_when: false
+  tags:
+    - monitoring
+    - events
+
+- name: Mostrar errores recientes del sistema
+  ansible.builtin.debug:
+    msg: "{{ recent_errors.stdout_lines }}"
+  when: recent_errors.stdout_lines is defined
+  tags:
+    - monitoring
+    - info

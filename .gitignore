@@ -1,0 +1,30 @@
+# Ansible
+*.retry
+ansible.log
+.vault_pass
+.vault_pass.txt
+vault_password.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Sensitive data
+vault/
+secrets/
+*.pem
+*.key

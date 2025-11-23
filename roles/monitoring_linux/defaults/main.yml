@@ -1,0 +1,26 @@
+---
+# Defaults para monitoring_linux
+
+# Servicios a monitorear
+monitored_services:
+  - ssh
+  - cron
+
+# Verificar uso de recursos
+check_resource_usage: true
+
+# Thresholds de alertas
+resource_thresholds:
+  cpu_warning: 70
+  cpu_critical: 90
+  memory_warning: 80
+  memory_critical: 95
+  disk_warning: 80
+  disk_critical: 90
+
+# Instalar herramientas de monitoreo
+install_monitoring_tools: true
+monitoring_tools:
+  - htop
+  - iotop
+  - nethogs

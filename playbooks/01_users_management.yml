@@ -1,0 +1,115 @@
+---
+# Playbook Módulo 1: Gestión de Usuarios y Permisos
+# Este playbook gestiona usuarios, grupos y permisos en servidores Linux y Windows
+
+- name: "MÓDULO 1: Gestión de Usuarios - Linux"
+  hosts: all_linux
+  gather_facts: yes
+  become: yes
+  
+  pre_tasks:
+    - name: Mostrar banner del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 1: Gestión de Usuarios y Permisos    "
+          - "  Plataforma: Linux                           "
+          - "================================================"
+      tags: always
+
+  roles:
+    - role: users_linux
+      when: modules_enabled.users_management | default(true)
+      tags:
+        - users
+        - linux
+
+  post_tasks:
+    - name: Verificar usuarios creados
+      ansible.builtin.command: getent passwd {{ item.name }}
+      loop: "{{ linux_users | default([]) }}"
+      when: 
+        - linux_users is defined
+        - item.state | default('present') == 'present'
+      register: user_verification
+      changed_when: false
+      failed_when: false
+      tags:
+        - users
+        - verification
+
+    - name: Resumen de usuarios Linux
+      ansible.builtin.debug:
+        msg: "Usuario {{ item.item.name }} - {{ 'Existe' if item.rc == 0 else 'No encontrado' }}"
+      loop: "{{ user_verification.results }}"
+      when: user_verification.results is defined
+      tags:
+        - users
+        - verification
+
+- name: "MÓDULO 1: Gestión de Usuarios - Windows"
+  hosts: all_windows
+  gather_facts: yes
+  
+  pre_tasks:
+    - name: Mostrar banner del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 1: Gestión de Usuarios y Permisos    "
+          - "  Plataforma: Windows                         "
+          - "================================================"
+      tags: always
+
+  roles:
+    - role: users_windows
+      when: modules_enabled.users_management | default(true)
+      tags:
+        - users
+        - windows
+
+  post_tasks:
+    - name: Verificar usuarios creados en Windows
+      ansible.windows.win_shell: |
+        $users = @({{ windows_users | default([]) | map(attribute='name') | map('quote') | join(',') }})
+        foreach ($user in $users) {
+          $exists = Get-LocalUser -Name $user -ErrorAction SilentlyContinue
+          if ($exists) {
+            Write-Output "$user : OK"
+          } else {
+            Write-Output "$user : NO ENCONTRADO"
+          }
+        }
+      when: windows_users is defined and windows_users | length > 0
+      register: windows_user_verification
+      changed_when: false
+      tags:
+        - users
+        - verification
+
+    - name: Resumen de usuarios Windows
+      ansible.builtin.debug:
+        msg: "{{ windows_user_verification.stdout_lines }}"
+      when: windows_user_verification.stdout_lines is defined
+      tags:
+        - users
+        - verification
+
+# Resumen final
+- name: "MÓDULO 1: Resumen Final"
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  
+  tasks:
+    - name: Mostrar resumen del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 1: Completado                        "
+          - "================================================"
+          - "✅ Usuarios y grupos configurados"
+          - "✅ Permisos aplicados"
+          - "✅ Políticas de seguridad configuradas"
+          - "================================================"
+      tags: always

@@ -1,0 +1,28 @@
+---
+# Variables globales para todos los hosts
+project_name: "ansible_infrastructure"
+environment: "development"
+
+# Configuración de red
+dns_servers:
+  - 8.8.8.8
+  - 8.8.4.4
+
+# Configuración de zona horaria
+default_timezone: "America/New_York"
+
+# Directorio temporal
+temp_dir: "/tmp"
+windows_temp_dir: "C:\\Temp"
+
+# Configuración de logs
+log_retention_days: 30
+
+# Features habilitados por módulo
+modules_enabled:
+  users_management: true
+  security_firewall: true
+  scheduled_tasks: true
+  software_provisioning: true
+  monitoring: true
+  storage_management: true

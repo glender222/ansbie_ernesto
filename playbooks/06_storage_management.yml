@@ -1,0 +1,62 @@
+---
+# Playbook Módulo 6: Gestión de Storage
+
+- name: "MÓDULO 6: Gestión de Storage - Linux"
+  hosts: all_linux
+  gather_facts: yes
+  become: yes
+  
+  pre_tasks:
+    - name: Banner del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 6: Gestión de Storage                "
+          - "  Plataforma: Linux                           "
+          - "================================================"
+      tags: always
+
+  roles:
+    - role: storage_linux
+      when: modules_enabled.storage_management | default(true)
+      tags:
+        - storage
+        - linux
+
+- name: "MÓDULO 6: Gestión de Storage - Windows"
+  hosts: all_windows
+  gather_facts: yes
+  
+  pre_tasks:
+    - name: Banner del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 6: Gestión de Storage                "
+          - "  Plataforma: Windows                         "
+          - "================================================"
+      tags: always
+
+  roles:
+    - role: storage_windows
+      when: modules_enabled.storage_management | default(true)
+      tags:
+        - storage
+        - windows
+
+- name: "MÓDULO 6: Resumen"
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  
+  tasks:
+    - name: Resumen del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 6: Completado                        "
+          - "================================================"
+          - "✅ Directorios creados"
+          - "✅ Storage verificado"
+          - "================================================"
+      tags: always

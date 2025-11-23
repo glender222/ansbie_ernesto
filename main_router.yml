@@ -1,0 +1,151 @@
+---
+# ====================================================================
+# MAIN ROUTER PLAYBOOK - Infraestructura Multi-Plataforma
+# ====================================================================
+# Este playbook maestro permite ejecutar módulos específicos o todos
+# Uso:
+#   - Todos los módulos: ansible-playbook main_router.yml
+#   - Módulo específico: ansible-playbook main_router.yml -e "module=1"
+#   - Varios módulos: ansible-playbook main_router.yml -e "modules=1,2,3"
+# ====================================================================
+
+- name: "ROUTER PRINCIPAL - Menú de Módulos"
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  
+  vars:
+    available_modules:
+      "1": "Gestión de Usuarios y Permisos"
+      "2": "Seguridad y Firewall"
+      "3": "Automatización y Tareas Programadas"
+      "4": "Provisioning de Software"
+      "5": "Monitoreo de Procesos y Servicios"
+      "6": "Gestión de Storage"
+    
+    module_playbooks:
+      "1": "playbooks/01_users_management.yml"
+      "2": "playbooks/02_security_firewall.yml"
+      "3": "playbooks/03_scheduled_tasks.yml"
+      "4": "playbooks/04_software_provisioning.yml"
+      "5": "playbooks/05_monitoring.yml"
+      "6": "playbooks/06_storage_management.yml"
+  
+  tasks:
+    - name: Mostrar banner de bienvenida
+      ansible.builtin.debug:
+        msg:
+          - "╔════════════════════════════════════════════════════════════╗"
+          - "║   ANSIBLE - INFRAESTRUCTURA MULTI-PLATAFORMA             ║"
+          - "║   Router Principal de Automatización                      ║"
+          - "╚════════════════════════════════════════════════════════════╝"
+          - ""
+          - "Módulos disponibles:"
+          - "  1️⃣  Gestión de Usuarios y Permisos"
+          - "  2️⃣  Seguridad y Firewall"
+          - "  3️⃣  Automatización y Tareas Programadas"
+          - "  4️⃣  Provisioning de Software"
+          - "  5️⃣  Monitoreo de Procesos y Servicios"
+          - "  6️⃣  Gestión de Storage"
+          - ""
+          - "Ejecución:"
+          - "  - Para ejecutar TODOS: ansible-playbook main_router.yml"
+          - "  - Para módulo específico: ansible-playbook main_router.yml -e 'module=1'"
+          - "  - Para varios: ansible-playbook main_router.yml -e 'modules=1,2,3'"
+          - ""
+      tags: always
+
+    - name: Determinar módulos a ejecutar
+      ansible.builtin.set_fact:
+        modules_to_run: >-
+          {%- if module is defined -%}
+            {{ [module] }}
+          {%- elif modules is defined -%}
+            {{ modules.split(',') }}
+          {%- else -%}
+            {{ available_modules.keys() | list }}
+          {%- endif -%}
+      tags: always
+
+    - name: Mostrar módulos que se ejecutarán
+      ansible.builtin.debug:
+        msg:
+          - "Módulos a ejecutar: {{ modules_to_run | join(', ') }}"
+          - "{{ '-' * 60 }}"
+      tags: always
+
+# ====================================================================
+# Ejecución de Módulos
+# ====================================================================
+
+- name: "MÓDULO 1: Gestión de Usuarios y Permisos"
+  ansible.builtin.import_playbook: playbooks/01_users_management.yml
+  when: "'1' in hostvars['localhost']['modules_to_run']"
+  tags:
+    - module1
+    - users
+
+- name: "MÓDULO 2: Seguridad y Firewall"
+  ansible.builtin.import_playbook: playbooks/02_security_firewall.yml
+  when: "'2' in hostvars['localhost']['modules_to_run']"
+  tags:
+    - module2
+    - security
+
+- name: "MÓDULO 3: Automatización y Tareas Programadas"
+  ansible.builtin.import_playbook: playbooks/03_scheduled_tasks.yml
+  when: "'3' in hostvars['localhost']['modules_to_run']"
+  tags:
+    - module3
+    - automation
+
+- name: "MÓDULO 4: Provisioning de Software"
+  ansible.builtin.import_playbook: playbooks/04_software_provisioning.yml
+  when: "'4' in hostvars['localhost']['modules_to_run']"
+  tags:
+    - module4
+    - software
+
+- name: "MÓDULO 5: Monitoreo de Procesos y Servicios"
+  ansible.builtin.import_playbook: playbooks/05_monitoring.yml
+  when: "'5' in hostvars['localhost']['modules_to_run']"
+  tags:
+    - module5
+    - monitoring
+
+- name: "MÓDULO 6: Gestión de Storage"
+  ansible.builtin.import_playbook: playbooks/06_storage_management.yml
+  when: "'6' in hostvars['localhost']['modules_to_run']"
+  tags:
+    - module6
+    - storage
+
+# ====================================================================
+# Resumen Final
+# ====================================================================
+
+- name: "RESUMEN FINAL"
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  
+  tasks:
+    - name: Mostrar resumen de ejecución
+      ansible.builtin.debug:
+        msg:
+          - ""
+          - "╔════════════════════════════════════════════════════════════╗"
+          - "║   EJECUCIÓN COMPLETADA                                   ║"
+          - "╚════════════════════════════════════════════════════════════╝"
+          - ""
+          - "Módulos ejecutados: {{ hostvars['localhost']['modules_to_run'] | join(', ') }}"
+          - ""
+          - "✅ Todos los módulos completados exitosamente"
+          - ""
+          - "Para más información:"
+          - "  - Ver logs: cat ansible.log"
+          - "  - Documentación: docs/"
+          - "  - Vault: docs/VAULT_USAGE.md"
+          - "  - VirtualBox: docs/SETUP_VIRTUALBOX.md"
+          - ""
+      tags: always

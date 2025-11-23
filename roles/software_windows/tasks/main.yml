@@ -1,0 +1,82 @@
+---
+# Tasks para provisioning de software en Windows
+
+- name: Instalar Chocolatey
+  ansible.windows.win_chocolatey:
+    name: chocolatey
+    state: present
+  when: ensure_chocolatey_installed | default(true)
+  tags:
+    - software
+    - chocolatey
+
+- name: Instalar paquetes vía Chocolatey
+  chocolatey.chocolatey.win_chocolatey:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ chocolatey_packages }}"
+  when: chocolatey_packages is defined
+  tags:
+    - software
+    - chocolatey
+    - packages
+
+- name: Configurar Windows Features
+  ansible.windows.win_feature:
+    name: "{{ item.name }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ windows_features }}"
+  when: windows_features is defined
+  tags:
+    - software
+    - features
+
+- name: Instalar software personalizado (MSI/EXE)
+  ansible.windows.win_package:
+    path: "{{ item.path }}"
+    product_id: "{{ item.product_id | default(omit) }}"
+    arguments: "{{ item.arguments | default('') }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ custom_software }}"
+  when: custom_software is defined and custom_software | length > 0
+  tags:
+    - software
+    - custom
+
+- name: Obtener lista de paquetes Chocolatey instalados
+  ansible.windows.win_shell: |
+    choco list --local-only
+  register: choco_packages_list
+  changed_when: false
+  tags:
+    - software
+    - info
+
+- name: Mostrar paquetes Chocolatey instalados
+  ansible.builtin.debug:
+    msg: "{{ choco_packages_list.stdout_lines }}"
+  when: choco_packages_list.stdout_lines is defined
+  tags:
+    - software
+    - info
+
+- name: Verificar versiones de software clave
+  ansible.windows.win_shell: |
+    $versions = @{}
+    try { $versions['Python'] = (python --version 2>&1).ToString() } catch {}
+    try { $versions['Git'] = (git --version).ToString() } catch {}
+    try { $versions['PowerShell'] = $PSVersionTable.PSVersion.ToString() } catch {}
+    $versions | ConvertTo-Json
+  register: software_versions
+  changed_when: false
+  tags:
+    - software
+    - info
+
+- name: Mostrar versiones de software
+  ansible.builtin.debug:
+    msg: "{{ software_versions.stdout | from_json }}"
+  when: software_versions.stdout is defined
+  tags:
+    - software
+    - info

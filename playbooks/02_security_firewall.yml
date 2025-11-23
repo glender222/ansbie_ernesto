@@ -1,0 +1,83 @@
+---
+# Playbook Módulo 2: Seguridad y Firewall
+
+- name: "MÓDULO 2: Seguridad y Firewall - Linux"
+  hosts: all_linux
+  gather_facts: yes
+  become: yes
+  
+  pre_tasks:
+    - name: Banner del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 2: Seguridad y Firewall              "
+          - "  Plataforma: Linux                           "
+          - "================================================"
+      tags: always
+
+  roles:
+    - role: firewall_linux
+      when: modules_enabled.security_firewall | default(true)
+      tags:
+        - firewall
+        - security
+        - linux
+
+  tasks:
+    - name: Instalar paquetes de seguridad adicionales
+      ansible.builtin.package:
+        name:
+          - fail2ban
+          - aide
+        state: present
+      tags:
+        - security
+        - packages
+
+- name: "MÓDULO 2: Seguridad y Firewall - Windows"
+  hosts: all_windows
+  gather_facts: yes
+  
+  pre_tasks:
+    - name: Banner del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 2: Seguridad y Firewall              "
+          - "  Plataforma: Windows                         "
+          - "================================================"
+      tags: always
+
+  roles:
+    - role: firewall_windows
+      when: modules_enabled.security_firewall | default(true)
+      tags:
+        - firewall
+        - security
+        - windows
+
+  tasks:
+    - name: Habilitar Windows Defender
+      ansible.windows.win_shell: |
+        Set-MpPreference -DisableRealtimeMonitoring $false
+      tags:
+        - security
+        - defender
+
+- name: "MÓDULO 2: Resumen"
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  
+  tasks:
+    - name: Resumen del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 2: Completado                        "
+          - "================================================"
+          - "✅ Firewalls configurados"
+          - "✅ Reglas de seguridad aplicadas"
+          - "================================================"
+      tags: always

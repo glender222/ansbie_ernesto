@@ -1,0 +1,69 @@
+---
+# Tasks para gestión de storage en Windows
+
+- name: Crear directorios gestionados
+  ansible.windows.win_file:
+    path: "{{ item.path }}"
+    state: "{{ item.state | default('directory') }}"
+  loop: "{{ managed_directories }}"
+  when: managed_directories is defined
+  tags:
+    - storage
+    - directories
+
+- name: Obtener información de discos
+  ansible.windows.win_shell: |
+    Get-PhysicalDisk | Select-Object DeviceId, FriendlyName, Size, MediaType | Format-Table -AutoSize
+  register: disk_info
+  changed_when: false
+  tags:
+    - storage
+    - info
+
+- name: Mostrar información de discos
+  ansible.builtin.debug:
+    msg: "{{ disk_info.stdout_lines }}"
+  tags:
+    - storage
+    - info
+
+- name: Obtener información de volúmenes
+  ansible.windows.win_shell: |
+    Get-Volume | Select-Object DriveLetter, FileSystemLabel, FileSystem, 
+    @{Name='Size(GB)';Expression={[math]::Round($_.Size/1GB,2)}},
+    @{Name='Free(GB)';Expression={[math]::Round($_.SizeRemaining/1GB,2)}},
+    @{Name='Used%';Expression={[math]::Round((($_.Size - $_.SizeRemaining)/$_.Size)*100,2)}} |
+    Format-Table -AutoSize
+  register: volume_info
+  changed_when: false
+  tags:
+    - storage
+    - info
+
+- name: Mostrar información de volúmenes
+  ansible.builtin.debug:
+    msg: "{{ volume_info.stdout_lines }}"
+  tags:
+    - storage
+    - info
+
+- name: Verificar espacio en disco C:
+  ansible.windows.win_shell: |
+    $disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+    $freePercent = [math]::Round(($disk.FreeSpace / $disk.Size) * 100, 2)
+    Write-Output "Espacio libre en C:: $freePercent%"
+    if ($freePercent -lt 20) {
+      Write-Output "WARNING: Espacio bajo en disco C:"
+    }
+  register: c_drive_space
+  changed_when: false
+  tags:
+    - storage
+    - info
+
+- name: Mostrar estado de disco C:
+  ansible.builtin.debug:
+    msg: "{{ c_drive_space.stdout_lines }}"
+  tags:
+    - storage
+    - info

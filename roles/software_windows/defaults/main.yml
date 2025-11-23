@@ -1,0 +1,28 @@
+---
+# Defaults para el rol software_windows
+
+# Asegurar que Chocolatey está instalado
+ensure_chocolatey_installed: true
+
+# Paquetes de Chocolatey a instalar
+chocolatey_packages:
+  - googlechrome
+  - 7zip
+  - notepadplusplus
+  - git
+  - python3
+  - vscode
+
+# Paquetes de Windows Features
+windows_features:
+  - name: "NET-Framework-Core"
+    state: present
+  - name: "Telnet-Client"
+    state: present
+
+# Software específico a instalar
+custom_software: []
+#  - name: "Custom App"
+#    path: "C:\\Install\\app.msi"
+#    product_id: "{GUID}"
+#    arguments: "/quiet /norestart"

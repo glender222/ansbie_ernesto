@@ -1,0 +1,62 @@
+---
+# Playbook Módulo 4: Provisioning de Software
+
+- name: "MÓDULO 4: Software Provisioning - Linux"
+  hosts: all_linux
+  gather_facts: yes
+  become: yes
+  
+  pre_tasks:
+    - name: Banner del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 4: Provisioning de Software          "
+          - "  Plataforma: Linux                           "
+          - "================================================"
+      tags: always
+
+  roles:
+    - role: software_linux
+      when: modules_enabled.software_provisioning | default(true)
+      tags:
+        - software
+        - linux
+
+- name: "MÓDULO 4: Software Provisioning - Windows"
+  hosts: all_windows
+  gather_facts: yes
+  
+  pre_tasks:
+    - name: Banner del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 4: Provisioning de Software          "
+          - "  Plataforma: Windows                         "
+          - "================================================"
+      tags: always
+
+  roles:
+    - role: software_windows
+      when: modules_enabled.software_provisioning | default(true)
+      tags:
+        - software
+        - windows
+
+- name: "MÓDULO 4: Resumen"
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  
+  tasks:
+    - name: Resumen del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 4: Completado                        "
+          - "================================================"
+          - "✅ Software base instalado"
+          - "✅ Servicios configurados"
+          - "================================================"
+      tags: always

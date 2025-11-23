@@ -1,0 +1,10 @@
+---
+# Handlers para el rol users_linux
+
+- name: Restart SSH service
+  ansible.builtin.service:
+    name: "{{ ssh_service_name | default('sshd') }}"
+    state: restarted
+  tags:
+    - users
+    - ssh

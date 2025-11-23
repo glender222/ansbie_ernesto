@@ -1,0 +1,62 @@
+---
+# Playbook Módulo 5: Monitoreo de Procesos y Servicios
+
+- name: "MÓDULO 5: Monitoreo - Linux"
+  hosts: all_linux
+  gather_facts: yes
+  become: yes
+  
+  pre_tasks:
+    - name: Banner del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 5: Monitoreo de Procesos y Servicios "
+          - "  Plataforma: Linux                           "
+          - "================================================"
+      tags: always
+
+  roles:
+    - role: monitoring_linux
+      when: modules_enabled.monitoring | default(true)
+      tags:
+        - monitoring
+        - linux
+
+- name: "MÓDULO 5: Monitoreo - Windows"
+  hosts: all_windows
+  gather_facts: yes
+  
+  pre_tasks:
+    - name: Banner del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 5: Monitoreo de Procesos y Servicios "
+          - "  Plataforma: Windows                         "
+          - "================================================"
+      tags: always
+
+  roles:
+    - role: monitoring_windows
+      when: modules_enabled.monitoring | default(true)
+      tags:
+        - monitoring
+        - windows
+
+- name: "MÓDULO 5: Resumen"
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  
+  tasks:
+    - name: Resumen del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 5: Completado                        "
+          - "================================================"
+          - "✅ Servicios monitoreados"
+          - "✅ Recursos del sistema verificados"
+          - "================================================"
+      tags: always

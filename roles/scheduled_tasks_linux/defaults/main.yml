@@ -1,0 +1,35 @@
+---
+# Defaults para el rol scheduled_tasks_linux
+
+# Cron jobs a configurar
+cron_jobs:
+  - name: "Daily backup"
+    job: "/usr/local/bin/backup.sh"
+    minute: "0"
+    hour: "2"
+    day: "*"
+    month: "*"
+    weekday: "*"
+    user: root
+    state: present
+    
+  - name: "Clean temp files"
+    job: "find /tmp -type f -mtime +7 -delete"
+    minute: "30"
+    hour: "3"
+    day: "*"
+    month: "*"
+    weekday: "*"
+    user: root
+    state: present
+
+# Scripts personalizados a crear
+custom_scripts: []
+#  - name: backup.sh
+#    content: |
+#      #!/bin/bash
+#      # Backup script
+#      tar -czf /backup/backup-$(date +%Y%m%d).tar.gz /data
+#    dest: /usr/local/bin/backup.sh
+#    mode: '0755'
+#    owner: root

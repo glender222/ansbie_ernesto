@@ -1,0 +1,150 @@
+---
+# Tasks para gestión de usuarios en Windows
+
+- name: Crear grupos locales de Windows
+  ansible.windows.win_group:
+    name: "{{ item.name }}"
+    description: "{{ item.description | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ windows_groups }}"
+  when: windows_groups is defined
+  tags:
+    - users
+    - groups
+
+- name: Crear usuarios locales de Windows
+  ansible.windows.win_user:
+    name: "{{ item.name }}"
+    fullname: "{{ item.fullname | default(omit) }}"
+    description: "{{ item.description | default(omit) }}"
+    password: "{{ item.password }}"
+    password_never_expires: "{{ item.password_never_expires | default(false) }}"
+    user_cannot_change_password: "{{ item.user_cannot_change_password | default(false) }}"
+    account_disabled: "{{ item.account_disabled | default(false) }}"
+    account_locked: no
+    groups: "{{ item.groups | default([]) }}"
+    groups_action: "{{ item.groups_action | default('add') }}"
+    state: "{{ item.state | default('present') }}"
+    update_password: "{{ item.update_password | default('on_create') }}"
+  loop: "{{ windows_users }}"
+  when: windows_users is defined
+  no_log: true  # No mostrar passwords en logs
+  tags:
+    - users
+
+- name: Configurar política de contraseñas mínimas
+  ansible.windows.win_security_policy:
+    section: "System Access"
+    key: "{{ item.key }}"
+    value: "{{ item.value }}"
+  loop:
+    - key: MinimumPasswordLength
+      value: "{{ password_policy.minimum_password_length | default(12) }}"
+    - key: PasswordHistorySize
+      value: "{{ password_policy.password_history_count | default(5) }}"
+    - key: MaximumPasswordAge
+      value: "{{ password_policy.maximum_password_age | default(90) }}"
+    - key: MinimumPasswordAge
+      value: "{{ password_policy.minimum_password_age | default(1) }}"
+  when: configure_password_policy | default(false)
+  tags:
+    - users
+    - security
+    - password_policy
+
+- name: Configurar complejidad de contraseñas
+  ansible.windows.win_security_policy:
+    section: "System Access"
+    key: PasswordComplexity
+    value: "{{ 1 if password_policy.password_complexity_enabled | default(true) else 0 }}"
+  when: configure_password_policy | default(false)
+  tags:
+    - users
+    - security
+    - password_policy
+
+- name: Verificar usuarios en grupos de Remote Desktop
+  ansible.windows.win_group_membership:
+    name: "Remote Desktop Users"
+    members: "{{ windows_users | selectattr('state', 'equalto', 'present') | map(attribute='name') | list }}"
+    state: present
+  when:
+    - enable_remote_desktop | default(false)
+    - windows_users is defined
+  tags:
+    - users
+    - remote_desktop
+
+- name: Habilitar Remote Desktop (RDP)
+  ansible.windows.win_regedit:
+    path: HKLM:\System\CurrentControlSet\Control\Terminal Server
+    name: fDenyTSConnections
+    data: 0
+    type: dword
+  when: enable_remote_desktop | default(false)
+  tags:
+    - users
+    - remote_desktop
+
+- name: Configurar regla de firewall para Remote Desktop
+  community.windows.win_firewall_rule:
+    name: "Remote Desktop - User Mode (TCP-In)"
+    localport: 3389
+    action: allow
+    direction: in
+    protocol: tcp
+    state: present
+    enabled: yes
+  when: enable_remote_desktop | default(false)
+  tags:
+    - users
+    - remote_desktop
+    - firewall
+
+- name: Obtener información de usuarios actuales
+  ansible.windows.win_shell: |
+    Get-LocalUser | Select-Object Name, Enabled | ConvertTo-Json
+  register: current_users
+  changed_when: false
+  tags:
+    - users
+    - info
+
+- name: Mostrar información de usuarios
+  ansible.builtin.debug:
+    msg: "{{ current_users.stdout | from_json }}"
+  when: current_users.stdout is defined
+  tags:
+    - users
+    - info
+
+- name: Eliminar usuarios obsoletos
+  ansible.windows.win_user:
+    name: "{{ item.name }}"
+    state: absent
+  loop: "{{ users_to_remove }}"
+  when: users_to_remove is defined and users_to_remove | length > 0
+  tags:
+    - users
+    - cleanup
+
+- name: Eliminar perfiles de usuarios eliminados
+  ansible.windows.win_shell: |
+    $username = "{{ item.name }}"
+    $profile = Get-CimInstance -Class Win32_UserProfile | Where-Object { $_.LocalPath -like "*$username" }
+    if ($profile) {
+        Remove-CimInstance -InputObject $profile
+        Write-Output "Profile removed for $username"
+    } else {
+        Write-Output "No profile found for $username"
+    }
+  loop: "{{ users_to_remove }}"
+  when:
+    - users_to_remove is defined
+    - users_to_remove | length > 0
+    - item.remove_profile | default(false)
+  register: profile_removal
+  changed_when: "'Profile removed' in profile_removal.stdout"
+  tags:
+    - users
+    - cleanup

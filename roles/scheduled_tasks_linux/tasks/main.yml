@@ -1,0 +1,69 @@
+---
+# Tasks para tareas programadas en Linux
+
+- name: Instalar cron
+  ansible.builtin.package:
+    name: "{{ 'cronie' if ansible_os_family == 'RedHat' else 'cron' }}"
+    state: present
+  tags:
+    - cron
+    - scheduled_tasks
+
+- name: Asegurar que crond está corriendo
+  ansible.builtin.service:
+    name: "{{ 'crond' if ansible_os_family == 'RedHat' else 'cron' }}"
+    state: started
+    enabled: yes
+  tags:
+    - cron
+    - scheduled_tasks
+
+- name: Crear scripts personalizados
+  ansible.builtin.copy:
+    content: "{{ item.content }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode | default('0755') }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+  loop: "{{ custom_scripts }}"
+  when: custom_scripts is defined and custom_scripts | length > 0
+  tags:
+    - cron
+    - scheduled_tasks
+    - scripts
+
+- name: Configurar cron jobs
+  ansible.builtin.cron:
+    name: "{{ item.name }}"
+    job: "{{ item.job }}"
+    minute: "{{ item.minute | default('*') }}"
+    hour: "{{ item.hour | default('*') }}"
+    day: "{{ item.day | default('*') }}"
+    month: "{{ item.month | default('*') }}"
+    weekday: "{{ item.weekday | default('*') }}"
+    user: "{{ item.user | default('root') }}"
+    state: "{{ item.state | default('present') }}"
+    disabled: "{{ item.disabled | default(false) }}"
+  loop: "{{ cron_jobs }}"
+  when: cron_jobs is defined
+  tags:
+    - cron
+    - scheduled_tasks
+
+- name: Listar cron jobs actuales
+  ansible.builtin.command: crontab -l -u {{ item.user | default('root') }}
+  loop: "{{ cron_jobs | default([]) | unique(attribute='user') }}"
+  register: crontab_list
+  changed_when: false
+  failed_when: false
+  tags:
+    - cron
+    - info
+
+- name: Mostrar cron jobs configurados
+  ansible.builtin.debug:
+    msg: "{{ crontab_list.results | map(attribute='stdout_lines') | list }}"
+  when: crontab_list.results is defined
+  tags:
+    - cron
+    - info

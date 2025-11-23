@@ -1,0 +1,13 @@
+---
+# Playbook principal del proyecto
+- name: Configuración general de servidores
+  hosts: all
+  gather_facts: yes
+  
+  tasks:
+    - name: Ping a todos los hosts
+      ansible.builtin.ping:
+      
+    - name: Mostrar información del sistema
+      ansible.builtin.debug:
+        msg: "Sistema operativo: {{ ansible_distribution }} {{ ansible_distribution_version }}"

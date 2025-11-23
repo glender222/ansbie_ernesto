@@ -1,0 +1,34 @@
+---
+# Galaxy Roles y Collections requeridos
+collections:
+  - name: ansible.windows
+    version: ">=1.14.0"
+  - name: community.windows
+    version: ">=1.13.0"
+  - name: ansible.posix
+    version: ">=1.5.0"
+  - name: community.general
+    version: ">=6.0.0"
+
+roles:
+  # Roles de geerlingguy para software provisioning
+  - name: geerlingguy.docker
+    version: ">=6.0.0"
+  
+  - name: geerlingguy.security
+    version: ">=2.0.0"
+  
+  - name: geerlingguy.firewall
+    version: ">=3.0.0"
+  
+  - name: geerlingguy.mysql
+    version: ">=4.0.0"
+  
+  - name: geerlingguy.postgresql
+    version: ">=3.0.0"
+  
+  - name: geerlingguy.nginx
+    version: ">=3.0.0"
+  
+  - name: geerlingguy.apache
+    version: ">=3.0.0"

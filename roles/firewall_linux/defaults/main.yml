@@ -1,0 +1,46 @@
+---
+# Defaults para el rol firewall_linux
+
+# Política por defecto del firewall
+firewall_default_policy:
+  input: DROP
+  forward: DROP
+  output: ACCEPT
+
+# Tipo de firewall a usar: firewalld, ufw, o iptables
+firewall_type: auto  # auto detectará automáticamente
+
+# Reglas del firewall
+firewall_rules:
+  - name: Allow SSH
+    port: 22
+    protocol: tcp
+    source: any
+    state: enabled
+  
+  - name: Allow HTTP
+    port: 80
+    protocol: tcp
+    source: any
+    state: enabled
+  
+  - name: Allow HTTPS
+    port: 443
+    protocol: tcp
+    source: any
+    state: enabled
+
+# Puertos adicionales a abrir
+firewall_custom_ports:
+  # - port: 8080
+  #   protocol: tcp
+  #   description: "Custom Application"
+
+# Habilitar logging
+firewall_log_denied: true
+
+# Zonas para firewalld (si aplica)
+firewalld_zone: public
+
+# Permitir ping
+allow_ping: true

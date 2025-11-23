@@ -1,0 +1,32 @@
+---
+# Defaults para el rol software_linux
+
+# Paquetes a instalar
+linux_packages:
+  - vim
+  - git
+  - curl
+  - wget
+  - htop
+  - net-tools
+  - python3
+  - python3-pip
+
+# Servicios a instalar y configurar
+services_to_install:
+  docker: false
+  nginx: false
+  apache: false
+  mysql: false
+  postgresql: false
+  nodejs: false
+
+# Repositorios adicionales
+additional_repos: []
+#  - repo: "ppa:ondrej/php"
+#    state: present
+
+# Python packages via pip
+python_packages:
+  - name: requests
+  - name: boto3

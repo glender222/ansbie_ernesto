@@ -1,0 +1,35 @@
+---
+# Defaults para el rol scheduled_tasks_windows
+
+# Tareas programadas de Windows
+windows_scheduled_tasks:
+  - name: "Daily Cleanup"
+    description: "Limpieza diaria de archivos temporales"
+    actions:
+      - path: 'C:\Windows\System32\cmd.exe'
+        arguments: '/c del /q /f C:\Temp\*.*'
+    triggers:
+      - type: daily
+        start_time: '03:00:00'
+    enabled: yes
+    state: present
+    
+  - name: "Weekly Backup"
+    description: "Backup semanal de datos"
+    actions:
+      - path: 'C:\Scripts\backup.ps1'
+    triggers:
+      - type: weekly
+        start_time: '02:00:00'
+        days_of_week: sunday
+    enabled: yes
+    run_level: highest
+    state: present
+
+# Scripts personalizados de PowerShell
+custom_powershell_scripts: []
+#  - name: backup.ps1
+#    content: |
+#      # Backup script
+#      Compress-Archive -Path C:\Data -DestinationPath "C:\Backup\backup_$(Get-Date -Format yyyyMMdd).zip"
+#    dest: 'C:\Scripts\backup.ps1'

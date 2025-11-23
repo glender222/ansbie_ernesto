@@ -1,0 +1,112 @@
+---
+# Tasks para gestión de usuarios en Linux
+
+- name: Crear grupos de sistema
+  ansible.builtin.group:
+    name: "{{ item.name }}"
+    gid: "{{ item.gid | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ linux_groups }}"
+  when: linux_groups is defined
+  tags:
+    - users
+    - groups
+
+- name: Crear usuarios del sistema
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    comment: "{{ item.comment | default(omit) }}"
+    uid: "{{ item.uid | default(omit) }}"
+    group: "{{ item.group | default(omit) }}"
+    groups: "{{ item.groups | default([]) | join(',') }}"
+    shell: "{{ item.shell | default('/bin/bash') }}"
+    password: "{{ item.password | default(omit) }}"
+    update_password: "{{ item.update_password | default('on_create') }}"
+    createhome: "{{ item.createhome | default(true) }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ linux_users }}"
+  when: linux_users is defined
+  no_log: true  # No mostrar passwords en logs
+  tags:
+    - users
+
+- name: Crear directorio .ssh para usuarios
+  ansible.builtin.file:
+    path: "/home/{{ item.name }}/.ssh"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.group | default(item.name) }}"
+    mode: '0700'
+  loop: "{{ linux_users }}"
+  when:
+    - linux_users is defined
+    - item.state | default('present') == 'present'
+    - configure_ssh_keys | default(false)
+  tags:
+    - users
+    - ssh
+
+- name: Configurar claves SSH autorizadas
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ lookup('file', ssh_keys_dir + '/' + item.name + '.pub') }}"
+    state: present
+  loop: "{{ linux_users }}"
+  when:
+    - linux_users is defined
+    - item.state | default('present') == 'present'
+    - configure_ssh_keys | default(false)
+    - lookup('fileglob', ssh_keys_dir + '/' + item.name + '.pub', errors='ignore') | length > 0
+  ignore_errors: yes
+  tags:
+    - users
+    - ssh
+
+- name: Configurar sudo sin password para grupos
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/{{ item }}
+    line: "%{{ item }} ALL=(ALL) NOPASSWD:ALL"
+    create: yes
+    mode: '0440'
+    validate: 'visudo -cf %s'
+  loop: "{{ sudo_nopasswd_groups }}"
+  when: sudo_nopasswd_groups is defined and sudo_nopasswd_groups | length > 0
+  tags:
+    - users
+    - sudo
+
+- name: Deshabilitar login de root por SSH
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: Restart SSH service
+  when: disable_root_ssh | default(false)
+  tags:
+    - users
+    - ssh
+    - security
+
+- name: Configurar autenticación por password SSH
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: "PasswordAuthentication {{ 'yes' if allow_password_auth | default(true) else 'no' }}"
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: Restart SSH service
+  tags:
+    - users
+    - ssh
+    - security
+
+- name: Eliminar usuarios obsoletos
+  ansible.builtin.user:
+    name: "{{ item.username }}"
+    state: absent
+    remove: "{{ item.remove_home | default(false) }}"
+  loop: "{{ users_to_remove }}"
+  when: users_to_remove is defined and users_to_remove | length > 0
+  tags:
+    - users
+    - cleanup

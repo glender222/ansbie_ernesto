@@ -1,0 +1,89 @@
+---
+# Tasks para monitoreo en Linux
+
+- name: Instalar herramientas de monitoreo
+  ansible.builtin.package:
+    name: "{{ monitoring_tools }}"
+    state: present
+  when: install_monitoring_tools | default(true)
+  tags:
+    - monitoring
+    - tools
+
+- name: Verificar estado de servicios
+  ansible.builtin.service_facts:
+  tags:
+    - monitoring
+    - services
+
+- name: Verificar que servicios críticos están corriendo
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop: "{{ monitored_services }}"
+  when: monitored_services is defined
+  tags:
+    - monitoring
+    - services
+
+- name: Obtener uso de CPU
+  ansible.builtin.shell: top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1
+  register: cpu_usage
+  changed_when: false
+  tags:
+    - monitoring
+    - resources
+
+- name: Obtener uso de memoria
+  ansible.builtin.shell: free | grep Mem | awk '{printf "%.0f", $3/$2 * 100}'
+  register: memory_usage
+  changed_when: false
+  tags:
+    - monitoring
+    - resources
+
+- name: Obtener uso de disco
+  ansible.builtin.shell: df -h / | tail -1 | awk '{print $5}' | cut -d'%' -f1
+  register: disk_usage
+  changed_when: false
+  tags:
+    - monitoring
+    - resources
+
+- name: Mostrar estado de recursos
+  ansible.builtin.debug:
+    msg:
+      - "CPU Usage: {{ cpu_usage.stdout }}%"
+      - "Memory Usage: {{ memory_usage.stdout }}%"
+      - "Disk Usage: {{ disk_usage.stdout }}%"
+  tags:
+    - monitoring
+    - info
+
+- name: Advertir sobre uso alto de recursos
+  ansible.builtin.debug:
+    msg: "WARNING: {{ item.resource }} usage is {{ item.value }}%, exceeds threshold of {{ item.threshold }}%"
+  loop:
+    - { resource: 'CPU', value: "{{ cpu_usage.stdout | float }}", threshold: "{{ resource_thresholds.cpu_warning }}" }
+    - { resource: 'Memory', value: "{{ memory_usage.stdout | float }}", threshold: "{{ resource_thresholds.memory_warning }}" }
+    - { resource: 'Disk', value: "{{ disk_usage.stdout | float }}", threshold: "{{ resource_thresholds.disk_warning }}" }
+  when: item.value | float > item.threshold | float
+  tags:
+    - monitoring
+    - alerts
+
+- name: Listar procesos con mayor uso de CPU
+  ansible.builtin.shell: ps aux --sort=-%cpu | head -6
+  register: top_cpu_processes
+  changed_when: false
+  tags:
+    - monitoring
+    - processes
+
+- name: Mostrar procesos con mayor uso de CPU
+  ansible.builtin.debug:
+    msg: "{{ top_cpu_processes.stdout_lines }}"
+  tags:
+    - monitoring
+    - info

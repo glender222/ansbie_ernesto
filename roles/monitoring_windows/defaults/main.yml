@@ -1,0 +1,19 @@
+---
+# Defaults para monitoring_windows
+
+# Servicios a monitorear
+monitored_services:
+  - WinRM
+  - W32Time
+
+# Verificar uso de recursos
+check_resource_usage: true
+
+# Thresholds de alertas
+resource_thresholds:
+  cpu_warning: 70
+  cpu_critical: 90
+  memory_warning: 80
+  memory_critical: 95
+  disk_warning:80
+  disk_critical: 90

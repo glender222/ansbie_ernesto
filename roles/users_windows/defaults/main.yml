@@ -1,0 +1,56 @@
+---
+# Defaults para el rol users_windows
+# Este rol gestiona usuarios y grupos en sistemas Windows
+
+# Lista de usuarios a crear
+windows_users:
+  - name: developer
+    fullname: "Developer User"
+    description: "Developer Account"
+    password: "{{ vault_windows_user_password }}"
+    groups:
+      - Administrators
+      - "Remote Desktop Users"
+    state: present
+    password_never_expires: true
+    user_cannot_change_password: false
+    
+  - name: operator
+    fullname: "Operator User"
+    description: "Operator Account"
+    password: "{{ vault_windows_user_password }}"
+    groups:
+      - Operators
+      - "Remote Desktop Users"
+    state: present
+    password_never_expires: true
+    user_cannot_change_password: false
+
+# Lista de grupos locales a crear
+windows_groups:
+  - name: Developers
+    description: "Development Team"
+    state: present
+  
+  - name: Operators
+    description: "Operations Team"
+    state: present
+
+# Configurar políticas de contraseñas
+configure_password_policy: true
+
+# Política de contraseñas (si configure_password_policy es true)
+password_policy:
+  minimum_password_length: 12
+  password_complexity_enabled: true
+  password_history_count: 5
+  maximum_password_age: 90  # días
+  minimum_password_age: 1   # días
+
+# Usuarios a eliminar (si existen)
+users_to_remove: []
+#  - name: old_user
+#    remove_profile: yes
+
+# Habilitar Remote Desktop para usuarios específicos
+enable_remote_desktop: false

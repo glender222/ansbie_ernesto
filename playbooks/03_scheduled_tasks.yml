@@ -1,0 +1,63 @@
+---
+# Playbook Módulo 3: Automatización y Tareas Programadas
+
+- name: "MÓDULO 3: Tareas Programadas - Linux"
+  hosts: all_linux
+  gather_facts: yes
+  become: yes
+  
+  pre_tasks:
+    - name: Banner del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 3: Automatización y Tareas Programadas "
+          - "  Plataforma: Linux                           "
+          - "================================================"
+      tags: always
+
+  roles:
+    - role: scheduled_tasks_linux
+      when: modules_enabled.scheduled_tasks | default(true)
+      tags:
+        - cron
+        - scheduled_tasks
+        - linux
+
+- name: "MÓDULO 3: Tareas Programadas - Windows"
+  hosts: all_windows
+  gather_facts: yes
+  
+  pre_tasks:
+    - name: Banner del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 3: Automatización y Tareas Programadas "
+          - "  Plataforma: Windows                         "
+          - "================================================"
+      tags: always
+
+  roles:
+    - role: scheduled_tasks_windows
+      when: modules_enabled.scheduled_tasks | default(true)
+      tags:
+        - scheduled_tasks
+        - windows
+
+- name: "MÓDULO 3: Resumen"
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  
+  tasks:
+    - name: Resumen del módulo
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "  MÓDULO 3: Completado                        "
+          - "================================================"
+          - "✅ Tareas programadas configuradas"
+          - "✅ Scripts de automatización desplegados"
+          - "================================================"
+      tags: always

@@ -1,0 +1,51 @@
+---
+# Defaults para el rol users_linux
+# Este rol gestiona usuarios y grupos en sistemas Linux
+
+# Lista de usuarios a crear
+linux_users:
+  - name: developer
+    comment: "Developer User"
+    groups:
+      - sudo
+      - developers
+    shell: /bin/bash
+    password: "{{ vault_linux_user_password | password_hash('sha512') }}"
+    state: present
+    
+  - name: operator
+    comment: "Operator User"
+    groups:
+      - operators
+    shell: /bin/bash
+    password: "{{ vault_linux_user_password | password_hash('sha512') }}"
+    state: present
+
+# Lista de grupos a crear
+linux_groups:
+  - name: developers
+    state: present
+    gid: 3000
+  
+  - name: operators
+    state: present
+    gid: 3001
+
+# Configuración de SSH
+configure_ssh_keys: true
+
+# Directorio de claves SSH públicas
+ssh_keys_dir: "files/ssh_keys"
+
+# Deshabilitar login de root por SSH
+disable_root_ssh: true
+
+# Configuración de sudo sin password para grupos específicos
+sudo_nopasswd_groups:
+  - developers
+  - operators
+
+# Usuarios a eliminar (si existen)
+users_to_remove: []
+#  - username: old_user
+#    remove_home: yes

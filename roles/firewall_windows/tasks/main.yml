@@ -1,0 +1,73 @@
+---
+# Tasks para configuración de Windows Firewall
+
+- name: Habilitar perfiles de Windows Firewall
+  ansible.windows.win_firewall:
+    state: enabled
+    profiles:
+      - "{{ 'Domain' if firewall_profiles.domain else omit }}"
+      - "{{ 'Private' if firewall_profiles.private else omit }}"
+      - "{{ 'Public' if firewall_profiles.public else omit }}"
+  tags:
+    - firewall
+    - security
+
+- name: Configurar reglas de firewall de Windows
+  community.windows.win_firewall_rule:
+    name: "{{ item.name }}"
+    localport: "{{ item.localport | default(omit) }}"
+    protocol: "{{ item.protocol | default('tcp') }}"
+    direction: "{{ item.direction | default('in') }}"
+    action: "{{ item.action | default('allow') }}"
+    enabled: "{{ item.enabled | default(true) }}"
+    state: present
+    profiles: "{{ item.profiles | default(['domain', 'private', 'public']) }}"
+  loop: "{{ windows_firewall_rules + custom_firewall_rules }}"
+  tags:
+    - firewall
+    - security
+
+- name: Configurar regla ICMP (Ping)
+  community.windows.win_firewall_rule:
+    name: "Allow ICMPv4"
+    protocol: icmpv4
+    direction: in
+    action: "{{ 'block' if block_ping else 'allow' }}"
+    enabled: yes
+    state: present
+  tags:
+    - firewall
+    - security
+    - icmp
+
+- name: Obtener estado de firewall
+  ansible.windows.win_shell: |
+    Get-NetFirewallProfile | Select-Object Name, Enabled | Format-Table -AutoSize
+  register: firewall_status
+  changed_when: false
+  tags:
+    - firewall
+    - info
+
+- name: Mostrar estado del firewall
+  ansible.builtin.debug:
+    msg: "{{ firewall_status.stdout_lines }}"
+  tags:
+    - firewall
+    - info
+
+- name: Listar reglas activas de firewall
+  ansible.windows.win_shell: |
+    Get-NetFirewallRule | Where-Object {$_.Enabled -eq 'True'} | Select-Object DisplayName, Direction, Action | Format-Table -AutoSize  
+  register: active_rules
+  changed_when: false
+  tags:
+    - firewall
+    - info
+
+- name: Mostrar reglas activas
+  ansible.builtin.debug:
+    msg: "{{ active_rules.stdout_lines }}"
+  tags:
+    - firewall
+    - info

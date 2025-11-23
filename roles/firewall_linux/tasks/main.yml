@@ -1,0 +1,107 @@
+---
+# Tasks para configuración de firewall en Linux
+
+- name: Detectar sistema de firewall disponible
+  ansible.builtin.set_fact:
+    detected_firewall: "{{ 'firewalld' if ansible_facts.services['firewalld.service'] is defined else ('ufw' if ansible_facts.services['ufw.service'] is defined else 'iptables') }}"
+  when: firewall_type == 'auto'
+  tags:
+    - firewall
+    - security
+
+- name: Usar firewall especificado o detectado
+  ansible.builtin.set_fact:
+    active_firewall: "{{ firewall_type if firewall_type != 'auto' else detected_firewall }}"
+  tags:
+    - firewall
+
+# Configuración firewalld
+- name: Instalar firewalld
+  ansible.builtin.package:
+    name: firewalld
+    state: present
+  when: active_firewall == 'firewalld'
+  tags:
+    - firewall
+    - firewalld
+
+- name: Iniciar y habilitar firewalld
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: yes
+  when: active_firewall == 'firewall d'
+  tags:
+    - firewall
+    - firewalld
+
+- name: Configurar reglas en firewalld
+  ansible.posix.firewalld:
+    port: "{{ item.port }}/{{ item.protocol }}"
+    permanent: yes
+    state: "{{ 'enabled' if item.state == 'enabled' else 'disabled' }}"
+    zone: "{{ firewalld_zone }}"
+    immediate: yes
+  loop: "{{ firewall_rules }}"
+  when: active_firewall == 'firewalld'
+  tags:
+    - firewall
+    - firewalld
+
+# Configuración UFW
+- name: Instalar UFW
+  ansible.builtin.package:
+    name: ufw
+    state: present
+  when: active_firewall == 'ufw'
+  tags:
+    - firewall
+    - ufw
+
+- name: Configurar política por defecto UFW
+  community.general.ufw:
+    policy: "{{ firewall_default_policy.input | lower }}"
+    direction: incoming
+  when: active_firewall == 'ufw'
+  tags:
+    - firewall
+    - ufw
+
+- name: Configurar reglas en UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.protocol }}"
+  loop: "{{ firewall_rules }}"
+  when:
+    - active_firewall == 'ufw'
+    - item.state == 'enabled'
+  tags:
+    - firewall
+    - ufw
+
+- name: Habilitar UFW
+  community.general.ufw:
+    state: enabled
+  when: active_firewall == 'ufw'
+  tags:
+    - firewall
+    - ufw
+
+- name: Mostrar estado del firewall
+  ansible.builtin.command: >
+    {% if active_firewall == 'firewalld' %}firewall-cmd --list-all
+    {% elif active_firewall == 'ufw' %}ufw status verbose
+    {% else %}iptables -L -n{% endif %}
+  register: firewall_status
+  changed_when: false
+  tags:
+    - firewall
+    - info
+
+- name: Mostrar configuración actual
+  ansible.builtin.debug:
+    msg: "{{ firewall_status.stdout_lines }}"
+  tags:
+    - firewall
+    - info
