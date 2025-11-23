@@ -1,39 +1,43 @@
 # ============================================
-# ANSIBLE INVENTORY - VirtualBox VMs
+# ANSIBLE INVENTORY - VMware VMs
+# Linux Mint + Windows 10
 # ============================================
 
 [local]
 localhost ansible_connection=local
 
 # ============================================
-# LINUX SERVERS
+# LINUX SERVERS (Linux Mint)
 # ============================================
 [linux_servers]
-# Ejemplo de VM Linux en VirtualBox
-# linux-vm1 ansible_host=192.168.56.101 ansible_user=ansible ansible_ssh_private_key_file=~/.ssh/id_rsa
-# linux-vm2 ansible_host=192.168.56.102 ansible_user=ansible
+# VMs con Linux Mint en VMware
+# mint-vm1 ansible_host=192.168.137.101 ansible_user=tu-usuario
+# mint-vm2 ansible_host=192.168.137.102 ansible_user=tu-usuario
+
+[mint_servers]
+# Todas las VMs Linux Mint
+# mint-vm1 ansible_host=192.168.137.101 ansible_user=tu-usuario
 
 [ubuntu_servers]
-# Servidores Ubuntu específicos
-# ubuntu-vm1 ansible_host=192.168.56.103
+# Si tienes Ubuntu también (Linux Mint es compatible)
+# ubuntu-vm1 ansible_host=192.168.137.103
 
 [centos_servers]
-# Servidores CentOS/RHEL específicos
-# centos-vm1 ansible_host=192.168.56.104
+# Servidores CentOS/RHEL específicos (si los tienes)
 
 # ============================================
-# WINDOWS SERVERS
+# WINDOWS SERVERS (Windows 10)
 # ============================================
 [windows_servers]
-# Ejemplo de VM Windows en VirtualBox
-# windows-vm1 ansible_host=192.168.56.201
-# windows-vm2 ansible_host=192.168.56.202
+# VMs con Windows 10 en VMware
+# win10-vm1 ansible_host=192.168.137.201
+# win10-vm2 ansible_host=192.168.137.202
 
 # ============================================
 # GRUPOS DE FUNCIONALIDAD
 # ============================================
 [web_servers]
-# Servidores web (Linux o Windows)
+# Servidores web (Linux Mint o Windows 10)
 
 [db_servers]
 # Servidores de base de datos
@@ -46,6 +50,7 @@ localhost ansible_connection=local
 # ============================================
 [all_linux:children]
 linux_servers
+mint_servers
 ubuntu_servers
 centos_servers
 

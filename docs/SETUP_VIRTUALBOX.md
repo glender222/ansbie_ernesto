@@ -1,45 +1,81 @@
-# Guía de Configuración de VMs en VirtualBox
+# 🖥️ Guía de Configuración de VMs en VMware Workstation
 
-Esta guía te ayudará a configurar máquinas virtuales Linux y Windows en VirtualBox para usar con Ansible.
+Esta guía te ayudará a configurar máquinas virtuales Linux y Windows en VMware Workstation para usar con Ansible.
 
 ## 📋 Requisitos Previos
 
-- VirtualBox 6.0 o superior instalado
+- VMware Workstation Player (gratuito) o Pro instalado
 - Al menos 8GB de RAM disponible
 - 50GB de espacio en disco
 - Imágenes ISO de:
   - Ubuntu Server 22.04 LTS
   - Windows Server 2019/2022 o Windows 10/11
 
+---
+
 ## 🐧 Configuración de VM Linux (Ubuntu)
 
 ### 1. Crear la VM
 
-1. **Crear nueva VM** en VirtualBox:
-   - Nombre: `ansible-linux-01`
-   - Tipo: Linux
-   - Versión: Ubuntu (64-bit)
-   - RAM: 2GB mínimo
-   - Disco: 20GB
+#### Especificaciones recomendadas:
+```
+Nombre: ansible-linux-01
+Sistema: Linux - Ubuntu 64-bit
+RAM: 2GB (2048 MB)
+CPU: 2 cores
+Disco: 20GB (single file)
+Red 1: NAT (VMnet8)
+Red 2: Host-only (VMnet1)
+```
 
-2. **Configuración de Red**:
-   - Adaptador 1: NAT (para internet)
-   - Adaptador 2: Host-only Adapter (para Ansible)
-     - Nombre: vboxnet0 (Windows: VirtualBox Host-Only Ethernet Adapter)
+### 2. Configuración de Red
 
-### 2. Instalar Ubuntu Server
+VMware crea automáticamente las redes virtuales:
 
-1. Montar ISO de Ubuntu Server
-2. Durante instalación:
-   - Instalar OpenSSH Server ✅
-   - Crear usuario: `ansible` con password conocido
-   - Configurar IP estática en la interfaz host-only
+#### VMnet1 (Host-Only) - Para Ansible
+```
+Subnet: 192.168.137.0/24
+Host IP: 192.168.137.1
+Uso: Comunicación entre host y VMs
+```
 
-### 3. Configuración Post-Instalación
+#### VMnet8 (NAT) - Para Internet
+```
+Subnet: 192.168.XXX.0/24 (variable)
+Uso: Acceso a internet para las VMs
+```
+
+**Verificar configuración:**
+1. VMware → **Edit → Virtual Network Editor**
+2. (Requiere privilegios de administrador)
+3. Verificar que VMnet1 y VMnet8 existen
+
+### 3. Instalar Ubuntu Server
+
+Ver guía completa en: [`QUICKSTART_FIRST_VM.md`](QUICKSTART_FIRST_VM.md)
+
+**Configuración de red durante instalación:**
+
+Interfaz **ens33** (NAT):
+```
+- Dejar en DHCP
+- Para acceso a internet
+```
+
+Interfaz **ens34** (Host-only):
+```
+Método: Manual
+Subnet: 192.168.137.0/24
+Address: 192.168.137.101
+Gateway: (dejar vacío)
+DNS: 8.8.8.8
+```
+
+### 4. Configuración Post-Instalación
 
 ```bash
-# SSH a la VM (desde tu laptop)
-ssh ansible@192.168.56.101
+# SSH a la VM (desde Windows o WSL)
+ssh ansible@192.168.137.101
 
 # Actualizar sistema
 sudo apt update && sudo apt upgrade -y
@@ -47,161 +83,213 @@ sudo apt update && sudo apt upgrade -y
 # Instalar Python (requerido por Ansible)
 sudo apt install -y python3 python3-pip
 
-# Configurar sudo sin password para ansible
+# Configurar sudo sin password
 echo "ansible ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/ansible
 
-# Configurar SSH con clave pública (opcional pero recomendado)
-# En tu laptop:
-ssh-copy-id ansible@192.168.56.101
+# Verificar conectividad
+ping -c 3 google.com  # Internet (via NAT)
+ping -c 3 192.168.137.1  # Host Windows
 ```
 
-### 4. Configurar IP Estática
+### 5. SSH Keys (Opcional pero recomendado)
 
-Editar `/etc/netplan/00-installer-config.yaml`:
-
-```yaml
-network:
-  version: 2
-  ethernets:
-    enp0s3:  # Adaptador NAT
-      dhcp4: true
-    enp0s8:  # Adaptador Host-only
-      addresses:
-        - 192.168.56.101/24
-      dhcp4: false
-```
-
-Aplicar cambios:
 ```bash
-sudo netplan apply
+# Desde WSL
+ssh-keygen -t rsa -b 4096 -C "ansible@laptop"
+ssh-copy-id ansible@192.168.137.101
+
+# Probar
+ssh ansible@192.168.137.101  # Sin contraseña
 ```
+
+---
 
 ## 🪟 Configuración de VM Windows
 
 ### 1. Crear la VM
 
-1. **Crear nueva VM** en VirtualBox:
-   - Nombre: `ansible-windows-01`
-   - Tipo: Windows
-   - Versión: Windows 10/11 (64-bit)
-   - RAM: 4GB mínimo
-   - Disco: 40GB
-
-2. **Configuración de Red**:
-   - Adaptador 1: NAT
-   - Adaptador 2: Host-only Adapter (vboxnet0)
+#### Especificaciones recomendadas:
+```
+Nombre: ansible-windows-01
+Sistema: Windows 10/11 64-bit
+RAM: 4GB (4096 MB)
+CPU: 2 cores
+Disco: 40GB (single file)
+Red 1: NAT (VMnet8)
+Red 2: Host-only (VMnet1)
+```
 
 ### 2. Instalar Windows
 
 1. Montar ISO de Windows
-2. Completar instalación estándar
-3. Configurar usuario Administrador con contraseña conocida
+2. Iniciar VM
+3. Seguir instalación estándar de Windows
+4. Crear usuario Administrador con contraseña conocida
 
-### 3. Configuración Post-Instalación (PowerShell como Administrador)
+### 3. Configuración de Red
+
+Después de instalar Windows:
+
+**Adaptador 1 (NAT):**
+```
+- Dejar en DHCP
+- Para internet
+```
+
+**Adaptador 2 (Host-only):**
+1. Abrir **Network Connections** (ncpa.cpl)
+2. Identificar adaptador "Ethernet1" o similar (Host-only)
+3. Clic derecho → **Properties**
+4. **Internet Protocol Version 4 (TCP/IPv4)** → **Properties**
+5. Configurar:
+   ```
+   ○ Use the following IP address:
+   IP address: 192.168.137.201
+   Subnet mask: 255.255.255.0
+   Default gateway: (dejar vacío)
+   
+   Preferred DNS: 8.8.8.8
+   ```
+6. **OK** → **OK**
+
+### 4. Configurar WinRM (PowerShell como Administrador)
 
 ```powershell
-# Descargar script de configuración WinRM de Ansible
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1 -OutFile ConfigureRemotingForAnsible.ps1
+# Descargar script de configuración de Ansible
+$url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
+$file = "$env:TEMP\ConfigureRemotingForAnsible.ps1"
+(New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
 
 # Ejecutar configuración
-.\ConfigureRemotingForAnsible.ps1 -EnableCredSSP -DisableBasicAuth -Verbose
+powershell.exe -ExecutionPolicy ByPass -File $file -EnableCredSSP -DisableBasicAuth -Verbose
 
-# Verificar configuración WinRM
+# Verificar WinRM
 winrm get winrm/config/service
 winrm get winrm/config/winrs
 
-# Configurar firewall para WinRM
+# Verificar listeners
+winrm enumerate winrm/config/Listener
+```
+
+### 5. Configurar Firewall
+
+```powershell
+# Reglas WinRM
 netsh advfirewall firewall add rule name="WinRM-HTTP" dir=in localport=5985 protocol=TCP action=allow
 netsh advfirewall firewall add rule name="WinRM-HTTPS" dir=in localport=5986 protocol=TCP action=allow
 
-# Habilitar ejecución de scripts
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force
+# Desactivar firewall temporalmente para testing (SOLO PARA LAB)
+# Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
 ```
 
-### 4. Configurar IP Estática
-
-```powershell
-# Identificar adaptador Host-only
-Get-NetAdapter
-
-# Configurar IP (cambia "Ethernet 2" por el nombre de tu adaptador host-only)
-New-NetIPAddress -InterfaceAlias "Ethernet 2" -IPAddress 192.168.56.201 -PrefixLength 24
-```
-
-### 5. Instalar Chocolatey (Gestor de Paquetes)
+### 6. Instalar Chocolatey
 
 ```powershell
 Set-ExecutionPolicy Bypass -Scope Process -Force
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
 iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-# Verificar instalación
+# Verificar
 choco --version
 ```
 
-## 🌐 Configuración de Red Host-Only en VirtualBox
+### 7. Verificar desde Windows Host
 
-### En Windows (Host)
+```powershell
+# Ping
+ping 192.168.137.201
 
-1. Abrir VirtualBox → **Archivo** → **Administrador de red de host**
-2. Crear/Verificar adaptador:
-   - Nombre: VirtualBox Host-Only Ethernet Adapter
-   - IPv4: 192.168.56.1
-   - Máscara: 255.255.255.0
-   - DHCP: Deshabilitado
+# Test WinRM
+Test-WSMan -ComputerName 192.168.137.201
 
-### En Linux/Mac (Host)
-
-```bash
-# Listar adaptadores
-VBoxManage list hostonlyifs
-
-# Crear si no existe
-VBoxManage hostonlyif create
-
-# Configurar
-VBoxManage hostonlyif ipconfig vboxnet0 --ip 192.168.56.1 --netmask 255.255.255.0
+# Debería mostrar información del servicio WinRM
 ```
+
+---
+
+## 🌐 Configuración de Red VMware
+
+### Verificar Virtual Network Editor
+
+1. VMware → **Edit → Virtual Network Editor**
+2. Click **Change Settings** (requiere admin)
+
+#### VMnet1 (Host-Only):
+```
+Type: Host-only
+Subnet IP: 192.168.137.0
+Subnet mask: 255.255.255.0
+✓ Connect a host virtual adapter to this network
+✗ Use local DHCP service (deshabilitado)
+```
+
+#### VMnet8 (NAT):
+```
+Type: NAT
+Subnet IP: (automático, ej: 192.168.222.0)
+Subnet mask: 255.255.255.0
+✓ Use local DHCP service
+```
+
+### Verificar desde Windows (PowerShell)
+
+```powershell
+# Ver adaptadores VMware
+ipconfig | Select-String -Pattern "VMware" -Context 0,5
+
+# Deberías ver:
+# VMware Virtual Ethernet Adapter for VMnet1
+#   IPv4 Address: 192.168.137.1
+
+# VMware Virtual Ethernet Adapter for VMnet8
+#   IPv4 Address: 192.168.XXX.1
+```
+
+---
 
 ## ✅ Verificación de Conectividad
 
-### Desde tu laptop (host)
+### Desde Windows Host
 
-```bash
+```powershell
 # Ping a VM Linux
-ping 192.168.56.101
+ping 192.168.137.101
 
 # Ping a VM Windows
-ping 192.168.56.201
+ping 192.168.137.201
 
 # SSH a Linux
-ssh ansible@192.168.56.101
+ssh ansible@192.168.137.101
 
-# Test WinRM a Windows (desde PowerShell)
-Test-WSMan -ComputerName 192.168.56.201
+# Test WinRM a Windows
+Test-WSMan -ComputerName 192.168.137.201
 ```
 
-### Con Ansible
+### Con Ansible (desde WSL)
 
 ```bash
-# Instalar pywinrm (para Windows)
-pip install pywinrm
+# Instalar pywinrm
+pip3 install pywinrm
 
-# Test de conectividad Linux
+# Test Linux
 ansible linux_servers -m ping
 
-# Test de conectividad Windows
+# Test Windows
 ansible windows_servers -m win_ping
 ```
 
+---
+
 ## 📊 Tabla de Configuración de VMs
 
-| VM Name | OS | IP | Usuario | RAM | Disco | Adaptador 1 | Adaptador 2 |
-|---------|----|----|---------|-----|-------|-------------|-------------|
-| ansible-linux-01 | Ubuntu 22.04 | 192.168.56.101 | ansible | 2GB | 20GB | NAT | Host-only |
-| ansible-linux-02 | Ubuntu 22.04 | 192.168.56.102 | ansible | 2GB | 20GB | NAT | Host-only |
-| ansible-windows-01 | Windows 10 | 192.168.56.201 | Administrator | 4GB | 40GB | NAT | Host-only |
-| ansible-windows-02 | Windows 10 | 192.168.56.202 | Administrator | 4GB | 40GB | NAT | Host-only |
+| VM Name | OS | IP Host-Only | IP NAT | Usuario | RAM | Disco |
+|---------|----|--------------| -------|---------|-----|-------|
+| ansible-linux-01 | Ubuntu 22.04 | 192.168.137.101 | DHCP | ansible | 2GB | 20GB |
+| ansible-linux-02 | Ubuntu 22.04 | 192.168.137.102 | DHCP | ansible | 2GB | 20GB |
+| ansible-windows-01 | Windows 10 | 192.168.137.201 | DHCP | Administrator | 4GB | 40GB |
+| ansible-windows-02 | Windows 10 | 192.168.137.202 | DHCP | Administrator | 4GB | 40GB |
+
+---
 
 ## 🔧 Troubleshooting
 
@@ -211,7 +299,10 @@ ansible windows_servers -m win_ping
 # En la VM
 sudo systemctl status ssh
 sudo systemctl restart ssh
-sudo ufw allow ssh  # Si firewall está activo
+sudo systemctl enable ssh
+
+# Verificar firewall (debería estar inactivo)
+sudo ufw status
 ```
 
 ### Windows: WinRM no responde
@@ -221,38 +312,100 @@ sudo ufw allow ssh  # Si firewall está activo
 Get-Service winrm
 Start-Service winrm
 
-# Ver listeners
-winrm enumerate winrm/config/Listener
+# Recrear listener HTTPS
+$cert = New-SelfSignedCertificate -DnsName "ansible-windows-01" -CertStoreLocation Cert:\LocalMachine\My
+winrm create winrm/config/Listener?Address=*+Transport=HTTPS "@{Hostname=`"ansible-windows-01`"; CertificateThumbprint=`"$($cert.Thumbprint)`"}"
 
-# Recrear listener HTTPS si es necesario
-winrm delete winrm/config/Listener?Address=*+Transport=HTTPS
-New-SelfSignedCertificate -DnsName "ansible-windows-01" -CertStoreLocation Cert:\LocalMachine\My
-# Nota el Thumbprint
-winrm create winrm/config/Listener?Address=*+Transport=HTTPS '@{Hostname="ansible-windows-01"; CertificateThumbprint="THUMBPRINT_AQUI"}'
+# Verificar
+winrm enumerate winrm/config/Listener
 ```
 
 ### No hay conectividad de red
 
-1. Verificar que ambos adaptadores estén conectados en VirtualBox
-2. Verificar configuración de IP estática
-3. Desde la VM hacer ping al host: `ping 192.168.56.1`
-4. Deshabilitar firewall temporalmente para diagnosticar
+```bash
+# En Linux VM
+ip addr show  # Ver todas las IPs
+ip route  # Ver rutas
+
+# Reiniciar networking
+sudo systemctl restart systemd-networkd
+```
+
+```powershell
+# En Windows VM
+ipconfig /all
+route print
+
+# Renovar IP
+ipconfig /release
+ipconfig /renew
+```
+
+### VMnet1 no aparece en Windows
+
+```powershell
+# Como Administrador
+net stop VMwareHostd
+net start VMwareHostd
+
+# Reiniciar servicios de red VMware
+net stop "VMware NAT Service"
+net stop "VMware DHCP Service"
+net start "VMware DHCP Service"
+net start "VMware NAT Service"
+```
+
+---
+
+## 🚀 Snapshots en VMware
+
+### Crear Snapshot
+
+```
+1. VM → Snapshot → Take Snapshot
+2. Nombre: "Base Configuration - After Ansible Module 1"
+3. Descripción: "Users and firewall configured"
+4. ✓ Snapshot VM memory (para restaurar estado exacto)
+5. Take Snapshot
+```
+
+### Gestionar Snapshots
+
+```
+VM → Snapshot → Snapshot Manager
+- Ver árbol de snapshots
+- Revert to snapshot
+- Delete snapshot
+```
+
+**Mejores prácticas:**
+1. **Base Install** - Después de instalar OS
+2. **Ansible Ready** - Después de configurar SSH/WinRM
+3. **Before Module X** - Antes de cada módulo importante
+
+---
 
 ## 📚 Próximos Pasos
 
 Una vez configuradas las VMs:
 
-1. Actualizar `inventory/hosts` con las IPs correctas
-2. Configurar credenciales en Ansible Vault
-3. Ejecutar playbook de verificación: `ansible-playbook playbooks/site.yml`
-4. Proceder con los módulos específicos
+1. ✅ Actualizar `inventory/hosts` con las IPs correctas
+2. ✅ Configurar credenciales en Ansible Vault
+3. ✅ Ejecutar: `ansible-playbook main_router.yml -e "module=1"`
+4. ✅ Crear snapshots después de cada módulo exitoso
 
-## 🎯 Snapshots Recomendados
+---
 
-Crear snapshots en estos puntos:
+## 🎯 Ventajas de VMware vs VirtualBox
 
-1. **"Base Install"** - Después de instalar el OS
-2. **"Ansible Ready"** - Después de toda la configuración
-3. **"Before Module X"** - Antes de aplicar cada módulo
+| Característica | Beneficio |
+|----------------|-----------|
+| **Rendimiento** | 15-20% más rápido en operaciones I/O |
+| **Snapshots** | Más rápidos y confiables |
+| **Networking** | Configuración más estable |
+| **Integración** | Mejor con herramientas profesionales |
+| **Clonación** | Mucho más rápida (Pro) |
 
-Esto permite revertir cambios fácilmente durante pruebas.
+---
+
+**🎉 ¡VMs listas para automatización con Ansible!**

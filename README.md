@@ -54,6 +54,7 @@ ansible_oficial/
 │
 └── docs/                        # 📚 Documentación
     ├── SETUP_VIRTUALBOX.md     # Guía configuración VMs
+    ├── SETUP_WSL.md            # 🐧 Guía para Windows/WSL
     └── VAULT_USAGE.md          # Guía de Ansible Vault
 ```
 
@@ -70,16 +71,37 @@ ansible_oficial/
 
 ## 🚀 Inicio Rápido
 
+### 0. ¿Estás en Windows? Usa WSL (Recomendado)
+
+Si estás en una laptop Windows, **usa WSL** para ejecutar Ansible:
+
+```bash
+# En PowerShell (Administrador)
+wsl --install -d Ubuntu-22.04
+
+# Luego instala Ansible dentro de WSL
+# Ver guía completa: docs/SETUP_WSL.md
+```
+
+**📖 Guía completa de WSL**: [docs/SETUP_WSL.md](docs/SETUP_WSL.md)
+
 ### 1. Instalar Dependencias
 
 ```bash
-# Instalar Ansible
-pip install ansible
+# Desde WSL (Ubuntu) o Linux
+sudo apt update
+sudo apt install -y ansible python3 python3-pip
 
 # Instalar pywinrm para Windows
-pip install pywinrm
+pip3 install pywinrm
 
 # Instalar Galaxy collections
+ansible-galaxy install -r requirements.yml
+```
+
+**En Windows con PowerShell** (alternativa, NO recomendado):
+```powershell
+pip install ansible pywinrm
 ansible-galaxy install -r requirements.yml
 ```
 
