@@ -8,7 +8,7 @@ ansible_winrm_transport: ntlm
 ansible_winrm_server_cert_validation: ignore
 
 # Credenciales Windows (sin vault - contraseña directa)
-ansible_user: Administrator
+ansible_user: ansib  # Usuario real de Windows 10
 ansible_password: "Abc123#*"
 
 # PowerShell configuration
