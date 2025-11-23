@@ -7,9 +7,8 @@ ansible_port: 5985  # HTTP (cambiado de 5986)
 ansible_winrm_transport: ntlm
 ansible_winrm_server_cert_validation: ignore
 
-# Credenciales Windows (sin vault - contraseña directa)
-ansible_user: ansib  # Usuario real de Windows 10
-ansible_password: "Abc123#*"
+# Credenciales Windows (usuario fijo, password se pasa por comando)
+ansible_user: ansib
 
 # PowerShell configuration
 ansible_shell_type: powershell

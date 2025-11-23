@@ -46,27 +46,6 @@ cd ~/ansible_off/ansbie_ernesto
 ansible-inventory --list
 ```
 
-Deberías ver:
-- `glender-vm` (Linux Mint) - 192.168.11.137
-- `ansib-win10` (Windows 10) - 192.168.11.138
-
----
-
-## 🔌 Paso 3: Probar Conectividad
-
-```bash
-ansible all -m ping --ask-pass --ask-become-pass
-```
-
-**¿Qué hace esto?**
-- `ansible all` = Ejecutar en TODAS las VMs
-- `-m ping` = Usar el módulo "ping" (test de conexión)
-- `--ask-pass` = Pedir contraseña SSH
-- `--ask-become-pass` = Pedir contraseña sudo
-
-**Ansible te preguntará:**
-1. "SSH password:" → Escribe: `123456` (para Linux)
-2. "BECOME password [defaults to SSH password]:" → Presiona `Enter` (usa la misma)
 
 **Resultado esperado:**
 ```
